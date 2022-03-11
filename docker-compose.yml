@@ -1,0 +1,19 @@
+version: "3"
+services:
+  rabbitmq:
+    build:
+      context: "."
+      dockerfile: "./gateway/docker/rabbitmq/Dockerfile"
+    restart: always
+    environment:
+      RMQ_ADMIN_USER: ${RMQ_ADMIN_USER}
+      RMQ_ADMIN_PASS: ${RMQ_ADMIN_PASS}
+      RMQ_PROD_USER: ${RMQ_PROD_USER}
+      RMQ_PROD_PASS: ${RMQ_PROD_PASS}
+      RMQ_SUB_USER: ${RMQ_SUB_USER}
+      RMQ_SUB_PASS: ${RMQ_SUB_PASS}
+      RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: "-rabbit log_levels [{connection,warning},{channel,warning}]"
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+      - "5671:5671"
