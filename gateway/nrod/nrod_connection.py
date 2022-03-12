@@ -11,9 +11,13 @@ from typing import List
 from datetime import datetime
 from gateway.nrod.s_class import SClassMessage
 from gateway.logging.gateway_logging import GatewayLogger
+from prometheus_client import start_http_server, Summary, Counter, Histogram
 
 
 LOG = GatewayLogger(__file__, False)
+PROCESSING_TIME = Summary('message_processing_seconds', 'Time spent processing a message')
+ALL_MESSAGE_C = Counter('inbound_message_count', 'Inbound NROD message count')
+ALL_MESSAGE_L = Histogram('inbound_message_latency', 'Inbound NROD message latency')
 
 
 class MessageHeader(pydantic.BaseModel):
@@ -93,9 +97,23 @@ class Listener(stomp.ConnectionListener, pydantic.BaseModel):
         """Return the message type."""
         return list(message.keys())[0]
 
+    @staticmethod
     @pydantic.validate_arguments(config=dict(arbitrary_types_allowed=True))
+    def log_msg_latency(frame: stomp.utils.Frame) -> float:
+        """Return the message latency as a float."""
+        now = datetime.now().timestamp() * 1000
+        timestamp = int(frame.headers['timestamp'])
+        ALL_MESSAGE_L.observe(
+            (now - timestamp) / 1000
+        )
+
+    @pydantic.validate_arguments(config=dict(arbitrary_types_allowed=True))
+    @PROCESSING_TIME.time()
     def on_message(self, frame: stomp.utils.Frame) -> None:
         """Called when a message is received from the broker."""
+
+        ALL_MESSAGE_C.inc()
+        self.log_msg_latency(frame)
 
         msg = Message(
             headers=frame.headers,
@@ -245,5 +263,6 @@ class NRODConnection(pydantic.BaseModel):
 
 
 if __name__ == "__main__":
+    start_http_server(8000)
     conn = NRODConnection()
     conn.connect_and_subscribe()
