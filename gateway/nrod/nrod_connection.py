@@ -1,19 +1,19 @@
 """Provides a STOMP connection to NROD."""
-
-from gateway.logging.gateway_logging import GatewayLogger
-from s_class import SClassMessage
-from datetime import datetime
-from typing import List
-import json
 import os
-
-import stomp
-import socket
-import pydantic
+import sys
+sys.path.append(os.getcwd())  # nopep8
 import time
+import pydantic
+import socket
+import stomp
+import json
+from typing import List
+from datetime import datetime
+from gateway.nrod.s_class import SClassMessage
+from gateway.logging.gateway_logging import GatewayLogger
 
 
-LOG = GatewayLogger(__name__, False)
+LOG = GatewayLogger(__file__, False)
 
 
 class MessageHeader(pydantic.BaseModel):
@@ -81,44 +81,59 @@ class Listener(stomp.ConnectionListener, pydantic.BaseModel):
         title='The STOMP connection'
     )
 
-    def on_error(self, error) -> None:
-        """Called when a STOMP error is received."""
-        LOG.error(error)
+    @pydantic.validate_arguments(config=dict(arbitrary_types_allowed=True))
+    def on_error(self, frame: stomp.utils.Frame) -> None:
+        """STOMP Error Frame Received."""
+        LOG.logger.error('STOMP error frame received')
+        LOG.logger.error(frame.headers)
+        LOG.logger.error(frame.body)
 
     @staticmethod
     def get_message_type(message: dict) -> str:
         """Return the message type."""
         return list(message.keys())[0]
 
-    @pydantic.validate_arguments
-    def on_message(self, message) -> None:
+    @pydantic.validate_arguments(config=dict(arbitrary_types_allowed=True))
+    def on_message(self, frame: stomp.utils.Frame) -> None:
         """Called when a message is received from the broker."""
-        LOG.error(message)
+
         msg = Message(
-            headers=message.headers,
-            body=message.body
+            headers=frame.headers,
+            body=frame.body
         )
 
         for element in msg.body:
             msg_type = self.get_message_type(element)
             if msg_type == 'SF_MSG':
                 s_class = SClassMessage(**element['SF_MSG'])
+                print(s_class.json())
 
     def on_heartbeat_timeout(self):
-        print('*** Heartbeat Timeout ***')
+        """Called when a STOMP heartbeat is not RX at the expected interval."""
+        LOG.logger.error('*** Heartbeat Timeout ***')
 
     def on_heartbeat(self):
-        print('*** Heartbeat Received ***')
+        """Called when a STOMP heartbeat is received."""
+        LOG.logger.debug('*** Heartbeat Received ***')
 
-    def on_connected(self, headers):
-        print('STOMP Connection made...')
-        print(headers)
+    @pydantic.validate_arguments(config=dict(arbitrary_types_allowed=True))
+    def on_connected(self, frame: stomp.utils.Frame):
+        """Called when a STOMP Connection is made with the server."""
+        LOG.logger.error('STOMP Connection made')
+        LOG.logger.debug(frame.headers)
+        LOG.logger.debug(frame.body)
 
-    def on_connecting(self, host_and_port):
-        print(f'\tTCP/IP Connection made to {host_and_port}...')
+    def on_connecting(self, host_and_port: tuple) -> None:
+        """Called when a TCP/IP connection is made to the server."""
+        LOG.logger.error(f'\tTCP/IP Connection made to {host_and_port}...')
 
-    def on_send(self, frame):
-        print(frame)
+    def on_disconnecting(self):
+        """Called when a DISCONNECT frame is sent to the server."""
+        LOG.logger.error('Sending DISCONNECT frame')
+
+    def on_disconnected(self) -> None:
+        """Called when the TCP/IP Connection to the server is lost."""
+        LOG.logger.error('TCP/IP Connection has been lost')
 
 
 class NRODConnection(pydantic.BaseModel):
@@ -163,39 +178,66 @@ class NRODConnection(pydantic.BaseModel):
         default=['TD_ALL_SIG_AREA']
     )
 
-    def define_connection(self):
+    def define_connection(self) -> None:
         """Define the STOMP connection."""
         try:
             self.conn = stomp.Connection12(
                 host_and_ports=[(self.host, self.port)],
                 keepalive=True,
-                heartbeats=(15000, 15000)
+                heartbeats=(15000, 15000),
             )
             self.conn.set_listener('', Listener(conn=self.conn))
-        except Exception as err:
+        except stomp.exception as err:
+            LOG.logger.error(f'Unable to define STOMP TCP/IP Connection: {err}')
             exit(1)
 
-    def connect(self):
-        """Establish a connection."""
-
+    def connect(self) -> None:
+        """Define and establish a STOMP connection."""
         if not self.conn:
             self.define_connection()
 
-        self.conn.connect(
-            self.user,
-            self.password,
-            headers={'client-id': self.client_id}
-        )
+        try:
+            self.conn.connect(
+                self.user,
+                self.password,
+                headers={'client-id': self.client_id}
+            )
+        except stomp.exception as err:
+            LOG.logger.error(f'Unable to create STOMP Connection: {err}')
+            exit(1)
+        else:
+            LOG.logger.error('Waiting for STOMP Connection to return...')
+            timeout = 1
+            while not self.conn.is_connected():
+                if timeout < 20:
+                    time.sleep(timeout)
+                    timeout += 1
+                else:
+                    LOG.logger.error('Connection Request Timed Out')
+                    exit(1)
+
+    def subscribe(self) -> None:
+        """Subscribe to each topic."""
+        if not self.conn.is_connected():
+            self.connect()
 
         for topic in self.topics:
-            self.conn.subscribe(
-                destination=f'/topic/{topic}',
-                ack='auto',
-                id=1,
-                headers={'activemq.subscriptionName': f'{topic}-{self.client_id}'}
-            )
+            try:
+                self.conn.subscribe(
+                    destination=f'/topic/{topic}',
+                    ack='auto',
+                    id=1,
+                    headers={'activemq.subscriptionName': f'{topic}-{self.client_id}'}
+                )
+            except stomp.exception as err:
+                LOG.logger.error(f'Unable to subscribe to {topic}: {err}')
+                exit(1)
 
-        time.sleep(10)
+    def connect_and_subscribe(self) -> None:
+        """Define and create STOMP connection, subscribe to services."""
+        self.connect()
+        self.subscribe()
+
         while self.conn.is_connected():
             time.sleep(0.5)
 
@@ -204,4 +246,4 @@ class NRODConnection(pydantic.BaseModel):
 
 if __name__ == "__main__":
     conn = NRODConnection()
-    conn.connect()
+    conn.connect_and_subscribe()
