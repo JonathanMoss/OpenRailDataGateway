@@ -13,14 +13,10 @@ from gateway.logging.gateway_logging import GatewayLogger
 MAX_RETRY = 5
 LOG = GatewayLogger(__file__, False)
 
-RMQ_RETRY_C = Counter(
-    'nrod_rmq_retry_count',
-    'RMQ send message retry count'
-)
-
-RMQ_SENT_C = Counter(
-    'nrod_rmq_message_sent',
-    'RMQ send message count'
+RMQ_DELIVERY_C = Counter(
+    'nrod_rmq_delivery_stats',
+    'RMQ send message retry count',
+    ['msg']
 )
 
 
@@ -82,7 +78,7 @@ class OutboundConnection:
                 routing_key='',
                 properties=self.send_message_properties
             )
-            RMQ_SENT_C.inc()
+            RMQ_DELIVERY_C.labels(msg='DELIVERED').inc()
             return True
         except Exception as err:
             LOG.logger.error('Unable to publish the message: %s', err)
@@ -115,7 +111,7 @@ class OutboundConnection:
             att = attempt + 1
             if att > MAX_RETRY:
                 return False
-            RMQ_RETRY_C.inc()
+            RMQ_DELIVERY_C.labels(msg='RETRY').inc()
             self.close_connection()
             self.send_message(msg, headers=headers, attempt=att)
         return True
