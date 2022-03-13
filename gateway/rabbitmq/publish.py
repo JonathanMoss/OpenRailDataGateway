@@ -1,13 +1,27 @@
 """Persistent outbound connection to rabbitMQ."""
 
+# pylint: disable=E0401, C0413, R0903
+
 import os
+import sys
 import pika
 import pydantic
-import sys
+from prometheus_client import Counter
 sys.path.append(os.getcwd())  # nopep8
 from gateway.logging.gateway_logging import GatewayLogger
+
 MAX_RETRY = 5
 LOG = GatewayLogger(__file__, False)
+
+RMQ_RETRY_C = Counter(
+    'nrod_rmq_retry_count',
+    'RMQ send message retry count'
+)
+
+RMQ_SENT_C = Counter(
+    'nrod_rmq_message_sent',
+    'RMQ send message count'
+)
 
 
 class OutboundConnection:
@@ -55,7 +69,7 @@ class OutboundConnection:
             )
             return True
         except Exception as err:
-            LOG.logger.error(f'Unable to create the connection: {err}')
+            LOG.logger.error('Unable to create the connection: %s', err)
             return False
 
     @pydantic.validate_arguments
@@ -68,19 +82,19 @@ class OutboundConnection:
                 routing_key='',
                 properties=self.send_message_properties
             )
+            RMQ_SENT_C.inc()
             return True
         except Exception as err:
-            LOG.logger.error(f'Unable to publish the message: {err}')
+            LOG.logger.error('Unable to publish the message: %s', err)
             return False
 
     def close_connection(self):
         """Correctly close the connection."""
-
         try:
             self.channel.close()
             self.connection.close()
         except Exception as err:
-            LOG.logger.DEBUG(f'{err}')
+            LOG.logger.debug('Problems closing the connection: %s', err)
         finally:
             self.channel = None
             self.connection = None
@@ -101,11 +115,7 @@ class OutboundConnection:
             att = attempt + 1
             if att > MAX_RETRY:
                 return False
+            RMQ_RETRY_C.inc()
             self.close_connection()
             self.send_message(msg, headers=headers, attempt=att)
         return True
-
-
-if __name__ == "__main__":
-    con = OutboundConnection('TEST')
-    con.send_message('TEST')
