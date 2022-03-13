@@ -18,4 +18,6 @@ export RMQ_SUB_USER="$(pass rabbitmq/subscriber/user)"
 export RMQ_SUB_PASS="$(pass rabbitmq/subscriber/pass)"
 export NROD_USER="$(pass nrod/user)"
 export NROD_PASS="$(pass nrod/pass)"
+export RMQ_HOST="rabbitmq"
+export RMQ_PORT="5672"
 ```

@@ -12,6 +12,7 @@ from datetime import datetime
 from gateway.nrod.s_class import SClassMessage
 from gateway.logging.gateway_logging import GatewayLogger
 from prometheus_client import start_http_server, Counter, Histogram
+from gateway.rabbitmq.publish import OutboundConnection
 
 S_CLASS = ['SF_MSG', 'SG_MSG', 'SH_MSG']
 C_CLASS = ['CA_MSG', 'CB_MSG', 'CC_MSG', 'CT_MSG']
@@ -105,6 +106,11 @@ class Listener(stomp.ConnectionListener, pydantic.BaseModel):
         title='The STOMP connection'
     )
 
+    s_class_rmq: OutboundConnection = pydantic.Field(
+        title='The outbound RMQ connection object for s-class',
+        default=OutboundConnection('nrod-s-class')
+    )
+
     @pydantic.validate_arguments(config=dict(arbitrary_types_allowed=True))
     def on_error(self, frame: stomp.utils.Frame) -> None:
         """STOMP Error Frame Received."""
@@ -151,6 +157,7 @@ class Listener(stomp.ConnectionListener, pydantic.BaseModel):
         if msg_type == 'SF_MSG':
             s_class = SClassMessage(**element['SF_MSG'])
             TD_AREA_C.labels(msg=s_class.td).inc()
+            self.s_class_rmq.send_message(s_class.json())
 
     @pydantic.validate_arguments
     def process_c_class(self, element: dict, msg_type: str) -> None:

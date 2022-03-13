@@ -29,6 +29,8 @@ services:
       NROD_PASS: ${NROD_PASS}
       LOG_DIR: "/var/www/logs"
       LOG_LEVEL: "DEBUG"
+      RMQ_PORT: ${RMQ_PORT}
+      RMQ_HOST: ${RMQ_HOST}
     ports:
       - "8000:8000"
     volumes:
