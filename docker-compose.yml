@@ -3,7 +3,7 @@ services:
   rabbitmq:
     build:
       context: "."
-      dockerfile: "./gateway/docker/rabbitmq/Dockerfile"
+      dockerfile: "./docker/rabbitmq/Dockerfile"
     restart: always
     environment:
       RMQ_ADMIN_USER: ${RMQ_ADMIN_USER}
@@ -17,3 +17,37 @@ services:
       - "15672:15672"
       - "5672:5672"
       - "5671:5671"
+  nrod:
+    build:
+      context: "."
+      dockerfile: "./docker/nrod/Dockerfile"
+    restart: always
+    environment:
+      RMQ_PROD_USER: ${RMQ_PROD_USER}
+      RMQ_PROD_PASS: ${RMQ_PROD_PASS}
+      NROD_USER: ${NROD_USER}
+      NROD_PASS: ${NROD_PASS}
+      LOG_DIR: "/var/www/logs"
+      LOG_LEVEL: "DEBUG"
+    ports:
+      - "8000:8000"
+    volumes:
+      - "logs:/var/www/logs"
+  prometheus:
+    container_name: prometheus-svc
+    image: prom/prometheus
+    ports:
+      - "9091:9090"
+    command: --config.file=/etc/prometheus/prometheus.yaml
+    volumes:
+      - ./prometheus:/etc/prometheus/
+  grafana:
+    image: grafana/grafana:5.0.4
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_AUTH_BASIC_ENABLED=false
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+volumes:
+  logs: ~

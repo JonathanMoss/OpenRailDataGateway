@@ -119,6 +119,7 @@ class Listener(stomp.ConnectionListener, pydantic.BaseModel):
             headers=frame.headers,
             body=frame.body
         )
+        print(msg.msg_time)
 
         for element in msg.body:
             msg_type = self.get_message_type(element)
