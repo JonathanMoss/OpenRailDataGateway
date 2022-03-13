@@ -6,5 +6,6 @@ run echo Europe/London > /etc/timezone && unlink /etc/localtime && ln -s /usr/sh
 
 env RABBITMQ_PID_FILE=/var/lib/rabbitmq/mnesia/rabbitmq
 run rabbitmq-plugins enable rabbitmq_management
-add ./gateway/docker/rabbitmq/entrypoint.sh .
+run rabbitmq-plugins enable rabbitmq_prometheus
+add ./docker/rabbitmq/entrypoint.sh .
 entrypoint ["./entrypoint.sh"]

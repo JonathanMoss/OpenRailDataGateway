@@ -11,12 +11,32 @@ from typing import List
 from datetime import datetime
 from gateway.nrod.s_class import SClassMessage
 from gateway.logging.gateway_logging import GatewayLogger
-from prometheus_client import start_http_server, Summary, Counter, Histogram
+from prometheus_client import start_http_server, Counter, Histogram
 
+S_CLASS = ['SF_MSG', 'SG_MSG', 'SH_MSG']
+C_CLASS = ['CA_MSG', 'CB_MSG', 'CC_MSG', 'CT_MSG']
 
 LOG = GatewayLogger(__file__, False)
-PROCESSING_TIME = Summary('message_processing_seconds', 'Time spent processing a message')
-ALL_MESSAGE_C = Counter('inbound_message_count', 'Inbound NROD message count')
+ALL_MESSAGE_C = Counter(
+    'nrod_inbound_message_count',
+    'Inbound NROD message count',
+    ['msg'])
+C_CLASS_C = Counter(
+    'nrod_c_class_message_count',
+    'Inbound C-Class message count',
+    ['msg']
+)
+S_CLASS_C = Counter(
+    'nrod_s_class_message_count',
+    'Inbound S-Class message count',
+    ['msg']
+)
+TD_AREA_C = Counter(
+    'nrod_td_area_count',
+    'Inbound S/C Class TD area count',
+    ['msg']
+)
+
 ALL_MESSAGE_L = Histogram('inbound_message_latency', 'Inbound NROD message latency')
 
 
@@ -92,10 +112,26 @@ class Listener(stomp.ConnectionListener, pydantic.BaseModel):
         LOG.logger.error(frame.headers)
         LOG.logger.error(frame.body)
 
-    @staticmethod
-    def get_message_type(message: dict) -> str:
-        """Return the message type."""
-        return list(message.keys())[0]
+    def get_message_type(self, message: dict) -> dict:
+        """Return the message type, and processing function."""
+
+        msg_type = list(message.keys())[0]
+        if msg_type in C_CLASS:
+            return {
+                'msg_type': msg_type,
+                'func': self.process_c_class
+            }
+
+        if msg_type in S_CLASS:
+            return {
+                'msg_type': msg_type,
+                'func': self.process_s_class
+            }
+
+        return {
+            'msg_type': msg_type,
+            'func': self.unknown_message
+        }
 
     @staticmethod
     @pydantic.validate_arguments(config=dict(arbitrary_types_allowed=True))
@@ -107,25 +143,48 @@ class Listener(stomp.ConnectionListener, pydantic.BaseModel):
             (now - timestamp) / 1000
         )
 
+    @pydantic.validate_arguments
+    def process_s_class(self, element: dict, msg_type: str) -> None:
+        """Process the S-Class message."""
+        ALL_MESSAGE_C.labels(msg='s-class').inc()
+        S_CLASS_C.labels(msg=msg_type).inc()
+        if msg_type == 'SF_MSG':
+            s_class = SClassMessage(**element['SF_MSG'])
+            TD_AREA_C.labels(msg=s_class.td).inc()
+
+    @pydantic.validate_arguments
+    def process_c_class(self, element: dict, msg_type: str) -> None:
+        """Process the C-Class message."""
+        ALL_MESSAGE_C.labels(msg='c-class').inc()
+        C_CLASS_C.labels(msg=msg_type).inc()
+
+    @pydantic.validate_arguments
+    def unknown_message(self, element: dict, msg_type: str) -> None:
+        """Deal with an unknow message type."""
+        ALL_MESSAGE_C.labels(msg='unknown').inc()
+        LOG.logger.error(f'Unknown message type received: {msg_type}')
+        LOG.logger.error(f'{element}')
+
     @pydantic.validate_arguments(config=dict(arbitrary_types_allowed=True))
-    @PROCESSING_TIME.time()
+    def process_message(self, element: dict) -> None:
+        """Process the message, based on type."""
+        msg = self.get_message_type(element)
+        msg['func'](element, msg['msg_type'])
+
+    @pydantic.validate_arguments(config=dict(arbitrary_types_allowed=True))
     def on_message(self, frame: stomp.utils.Frame) -> None:
         """Called when a message is received from the broker."""
 
-        ALL_MESSAGE_C.inc()
+        ALL_MESSAGE_C.labels(msg='all').inc()
         self.log_msg_latency(frame)
 
         msg = Message(
             headers=frame.headers,
             body=frame.body
         )
-        print(msg.msg_time)
 
         for element in msg.body:
-            msg_type = self.get_message_type(element)
-            if msg_type == 'SF_MSG':
-                s_class = SClassMessage(**element['SF_MSG'])
-                print(s_class.json())
+            self.process_message(element)
 
     def on_heartbeat_timeout(self):
         """Called when a STOMP heartbeat is not RX at the expected interval."""

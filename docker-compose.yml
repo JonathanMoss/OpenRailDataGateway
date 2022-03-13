@@ -4,7 +4,7 @@ services:
     build:
       context: "."
       dockerfile: "./docker/rabbitmq/Dockerfile"
-    restart: always
+    restart: unless-stopped
     environment:
       RMQ_ADMIN_USER: ${RMQ_ADMIN_USER}
       RMQ_ADMIN_PASS: ${RMQ_ADMIN_PASS}
@@ -21,7 +21,7 @@ services:
     build:
       context: "."
       dockerfile: "./docker/nrod/Dockerfile"
-    restart: always
+    restart: unless-stopped
     environment:
       RMQ_PROD_USER: ${RMQ_PROD_USER}
       RMQ_PROD_PASS: ${RMQ_PROD_PASS}
@@ -35,6 +35,7 @@ services:
       - "logs:/var/www/logs"
   prometheus:
     container_name: prometheus-svc
+    restart: unless-stopped
     image: prom/prometheus
     ports:
       - "9091:9090"
