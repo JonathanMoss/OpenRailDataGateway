@@ -10,12 +10,30 @@ import json
 from typing import List
 from datetime import datetime
 from gateway.nrod.s_class import SClassMessage
+from gateway.nrod.c_class import CClassMessage
+from gateway.nrod.train_movement import Activation, Cancellation, Movement
 from gateway.logging.gateway_logging import GatewayLogger
 from prometheus_client import start_http_server, Counter, Histogram
 from gateway.rabbitmq.publish import OutboundConnection
 
 S_CLASS = ['SF_MSG', 'SG_MSG', 'SH_MSG']
 C_CLASS = ['CA_MSG', 'CB_MSG', 'CC_MSG', 'CT_MSG']
+TD_TOPIC = 'TD_ALL_SIG_AREA'
+MVT_TOPIC = 'TRAIN_MVT_ALL_TOC'
+VSTP_TOPIC = 'VSTP_ALL'
+PPM_TOPIC = 'RTPPM_ALL'
+TSR_TOPIC = 'TSR_ALL_ROUTE'
+
+TRN_MOVEMENT = {
+    '0001': 'ACT',
+    '0002': 'CAN',
+    '0003': 'MVT',
+    '0004': 'UTX',
+    '0005': 'REN',
+    '0006': 'COO',
+    '0007': 'COI',
+    '0008': 'COL'
+}
 
 LOG = GatewayLogger(__file__, False)
 ALL_MESSAGE_C = Counter(
@@ -37,6 +55,11 @@ TD_AREA_C = Counter(
     'Inbound S/C Class TD area count',
     ['msg']
 )
+TRAIN_MVT_C = Counter(
+    'nrod_train_mvt_msg_count',
+    'Inbound MVT msg count',
+    ['msg']
+)
 
 ALL_MESSAGE_L = Histogram('inbound_message_latency', 'Inbound NROD message latency')
 
@@ -56,6 +79,12 @@ class MessageHeader(pydantic.BaseModel):
     timestamp: int = pydantic.Field(
         title='The message timestamp'
     )
+
+    @pydantic.validator('destination')
+    @classmethod
+    def validate_destination(cls, value: str) -> str:
+        """Validate the destination(topic)."""
+        return value.strip('/topic/')
 
 
 class Message(pydantic.BaseModel):
@@ -111,6 +140,26 @@ class Listener(stomp.ConnectionListener, pydantic.BaseModel):
         default=OutboundConnection('nrod-s-class')
     )
 
+    c_class_rmq: OutboundConnection = pydantic.Field(
+        title='The outbound RMQ connection object for c-class',
+        default=OutboundConnection('nrod-c-class')
+    )
+
+    act_rmq: OutboundConnection = pydantic.Field(
+        title='The outbound RMQ connection object for Activations',
+        default=OutboundConnection('nrod-activation')
+    )
+
+    canx_rmq: OutboundConnection = pydantic.Field(
+        title='The outbound RMQ connection object for Cancellations',
+        default=OutboundConnection('nrod-canx')
+    )
+
+    mvt_rmq: OutboundConnection = pydantic.Field(
+        title='The outbound RMQ connection object for Movements',
+        default=OutboundConnection('nrod-movement')
+    )
+
     @pydantic.validate_arguments(config=dict(arbitrary_types_allowed=True))
     def on_error(self, frame: stomp.utils.Frame) -> None:
         """STOMP Error Frame Received."""
@@ -164,6 +213,9 @@ class Listener(stomp.ConnectionListener, pydantic.BaseModel):
         """Process the C-Class message."""
         ALL_MESSAGE_C.labels(msg='c-class').inc()
         C_CLASS_C.labels(msg=msg_type).inc()
+        c_class = CClassMessage(**element[msg_type])
+        TD_AREA_C.labels(msg=c_class.td).inc()
+        self.c_class_rmq.send_message(c_class.json())
 
     @pydantic.validate_arguments
     def unknown_message(self, element: dict, msg_type: str) -> None:
@@ -173,10 +225,52 @@ class Listener(stomp.ConnectionListener, pydantic.BaseModel):
         LOG.logger.error(f'{element}')
 
     @pydantic.validate_arguments(config=dict(arbitrary_types_allowed=True))
-    def process_message(self, element: dict) -> None:
+    def process_s_c_class(self, element: dict) -> None:
         """Process the message, based on type."""
         msg = self.get_message_type(element)
         msg['func'](element, msg['msg_type'])
+
+    @staticmethod
+    @pydantic.validate_arguments
+    def get_mvt_msg_type(element: dict) -> str:
+        """Extract and return the movement message type."""
+        return element['header']['msg_type']
+
+    @staticmethod
+    @pydantic.validate_arguments
+    def update_mvt_metrics(msg_type: str) -> None:
+        """Update the applicable metrics for a movement message."""
+        TRAIN_MVT_C.labels(msg=TRN_MOVEMENT[msg_type]).inc()
+
+    @pydantic.validate_arguments
+    def process_train_movements(self, element: dict) -> None:
+        """Process a train movements message."""
+        msg_type = Listener.get_mvt_msg_type(element)
+        Listener.update_mvt_metrics(msg_type)
+        if msg_type == '0001':
+            try:
+                act = Activation.nrod_factory(element)
+                self.act_rmq.send_message(act.json())
+            except pydantic.ValidationError as err:
+                print(err)
+                print(element)
+                return
+        if msg_type == '0002':
+            try:
+                canx = Cancellation.nrod_factory(element)
+                self.canx_rmq.send_message(canx.json())
+            except pydantic.ValidationError as err:
+                print(err)
+                print(element)
+                return
+        if msg_type == '0003':
+            try:
+                mvt = Movement.nrod_factory(element)
+                self.mvt_rmq.send_message(mvt.json())
+            except pydantic.ValidationError as err:
+                print(err)
+                print(element)
+                return
 
     @pydantic.validate_arguments(config=dict(arbitrary_types_allowed=True))
     def on_message(self, frame: stomp.utils.Frame) -> None:
@@ -190,8 +284,19 @@ class Listener(stomp.ConnectionListener, pydantic.BaseModel):
             body=frame.body
         )
 
+        dest = msg.headers.destination
         for element in msg.body:
-            self.process_message(element)
+            if dest == TD_TOPIC:
+                self.process_s_c_class(element)
+            if dest == MVT_TOPIC:
+                ALL_MESSAGE_C.labels(msg='movement').inc()
+                self.process_train_movements(element)
+            if dest == VSTP_TOPIC:
+                ALL_MESSAGE_C.labels(msg='vstp').inc()
+            if dest == PPM_TOPIC:
+                ALL_MESSAGE_C.labels(msg='PPM').inc()
+            if dest == TSR_TOPIC:
+                ALL_MESSAGE_C.labels(msg='TSR').inc()
 
     def on_heartbeat_timeout(self):
         """Called when a STOMP heartbeat is not RX at the expected interval."""
@@ -260,7 +365,7 @@ class NRODConnection(pydantic.BaseModel):
 
     topics: List[str] = pydantic.Field(
         title='A list of topics in which to subscribe to',
-        default=['TD_ALL_SIG_AREA']
+        default=[TD_TOPIC, MVT_TOPIC, VSTP_TOPIC, PPM_TOPIC, TSR_TOPIC]
     )
 
     def define_connection(self) -> None:

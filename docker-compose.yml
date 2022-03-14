@@ -48,6 +48,7 @@ services:
     image: grafana/grafana:5.0.4
     ports:
       - "3000:3000"
+    restart: unless-stopped
     environment:
       - GF_AUTH_BASIC_ENABLED=false
       - GF_AUTH_ANONYMOUS_ENABLED=true
