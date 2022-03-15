@@ -11,7 +11,16 @@ from typing import List
 from datetime import datetime
 from gateway.nrod.s_class import SClassMessage
 from gateway.nrod.c_class import CClassMessage
-from gateway.nrod.train_movement import Activation, Cancellation, Movement
+from gateway.nrod.train_movement import (
+    Activation,
+    Cancellation,
+    Movement,
+    Reinstatement,
+    ChangeOfOrigin,
+    ChangeOfIdentity,
+    ChangeOfLocation
+)
+from gateway.nrod.vstp import VSTPSchedule
 from gateway.logging.gateway_logging import GatewayLogger
 from prometheus_client import start_http_server, Counter, Histogram
 from gateway.rabbitmq.publish import OutboundConnection
@@ -160,6 +169,31 @@ class Listener(stomp.ConnectionListener, pydantic.BaseModel):
         default=OutboundConnection('nrod-movement')
     )
 
+    ren_rmq: OutboundConnection = pydantic.Field(
+        title='The outbound RMQ connection object for Reinstatements',
+        default=OutboundConnection('nrod-reinstatement')
+    )
+
+    coo_rmq: OutboundConnection = pydantic.Field(
+        title='The outbound RMQ connection object for COO',
+        default=OutboundConnection('nrod-coo')
+    )
+
+    coi_rmq: OutboundConnection = pydantic.Field(
+        title='The outbound RMQ connection object for COI',
+        default=OutboundConnection('nrod-coi')
+    )
+
+    col_rmq: OutboundConnection = pydantic.Field(
+        title='The outbound RMQ connection object for COL',
+        default=OutboundConnection('nrod-col')
+    )
+
+    vstp_rmq: OutboundConnection = pydantic.Field(
+        title='The outbound RMQ connection object for VSTP',
+        default=OutboundConnection('nrod-vstp')
+    )
+
     @pydantic.validate_arguments(config=dict(arbitrary_types_allowed=True))
     def on_error(self, frame: stomp.utils.Frame) -> None:
         """STOMP Error Frame Received."""
@@ -271,6 +305,38 @@ class Listener(stomp.ConnectionListener, pydantic.BaseModel):
                 print(err)
                 print(element)
                 return
+        if msg_type == '0005':
+            try:
+                ren = Reinstatement.nrod_factory(element)
+                self.ren_rmq.send_message(ren.json())
+            except pydantic.ValidationError as err:
+                print(err)
+                print(element)
+                return
+        if msg_type == '0006':
+            try:
+                coo = ChangeOfOrigin.nrod_factory(element)
+                self.coo_rmq.send_message(coo.json())
+            except pydantic.ValidationError as err:
+                print(err)
+                print(element)
+                return
+        if msg_type == '0007':
+            try:
+                coi = ChangeOfIdentity.nrod_factory(element)
+                self.coi_rmq.send_message(coi.json())
+            except pydantic.ValidationError as err:
+                print(err)
+                print(element)
+                return
+        if msg_type == '0008':
+            try:
+                col = ChangeOfIdentity.nrod_factory(element)
+                self.col_rmq.send_message(col.json())
+            except pydantic.ValidationError as err:
+                print(err)
+                print(element)
+                return
 
     @pydantic.validate_arguments(config=dict(arbitrary_types_allowed=True))
     def on_message(self, frame: stomp.utils.Frame) -> None:
@@ -285,18 +351,31 @@ class Listener(stomp.ConnectionListener, pydantic.BaseModel):
         )
 
         dest = msg.headers.destination
+        if dest == VSTP_TOPIC:
+            ALL_MESSAGE_C.labels(msg='vstp').inc()
+            self.process_vstp(msg.body)
+            return
+
         for element in msg.body:
             if dest == TD_TOPIC:
                 self.process_s_c_class(element)
             if dest == MVT_TOPIC:
                 ALL_MESSAGE_C.labels(msg='movement').inc()
                 self.process_train_movements(element)
-            if dest == VSTP_TOPIC:
-                ALL_MESSAGE_C.labels(msg='vstp').inc()
             if dest == PPM_TOPIC:
                 ALL_MESSAGE_C.labels(msg='PPM').inc()
             if dest == TSR_TOPIC:
                 ALL_MESSAGE_C.labels(msg='TSR').inc()
+
+    @pydantic.validate_arguments
+    def process_vstp(self, element: dict) -> None:
+        """Process VSTP message."""
+        try:
+            vstp = VSTPSchedule.nrod_factory(element)
+            self.vstp_rmq.send_message(vstp.json())
+        except pydantic.ValidationError as err:
+            print(err)
+            print(element)
 
     def on_heartbeat_timeout(self):
         """Called when a STOMP heartbeat is not RX at the expected interval."""

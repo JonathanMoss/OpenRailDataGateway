@@ -1,4 +1,6 @@
 """Models for train movement messages."""
+
+# pylint: disable=E1101
 import re
 from typing import Optional, Union
 from enum import Enum
@@ -45,6 +47,423 @@ class MovementEventType(Enum):
     DEPARTURE = 'DEPARTURE'
 
 
+class ChangeOfLocation(pydantic.BaseModel):
+    """Representation of an NROD COL message."""
+
+    source_id: str = pydantic.Field(
+        title='The source device ID',
+        alias='source_dev_id'
+    )
+
+    data_source: str = pydantic.Field(
+        title='The original data source',
+        alias='original_data_source'
+    )
+
+    source_system: str = pydantic.Field(
+        title='Source system ID',
+        alias='source_system_id'
+    )
+
+    original_loc_timestamp: Union[str, None] = pydantic.Field(
+        title='The planned time associated with the original location'
+    )
+
+    current_train_id: Union[str, None] = pydantic.Field(
+        title='If the TRUST ID has been changed, this is the current one'
+    )
+
+    train_file_address: Optional[str] = pydantic.Field(
+        title='TOPS train file address, if applicable'
+    )
+
+    train_service_code: str = pydantic.Field(
+        title='The train service code'
+    )
+
+    dep_timestamp: Union[str, None] = pydantic.Field(
+        title='The departure time at the location the train is COL'
+    )
+
+    loc_stanox: Union[str, None] = pydantic.Field(
+        title='New origin STANOX',
+        max_length=5
+    )
+
+    train_id: Union[str, None] = pydantic.Field(
+        title='TRUST ID'
+    )
+
+    original_loc_stanox: Union[str, None] = pydantic.Field(
+        title='	If the location has been revised, the original STANOX'
+    )
+
+    event_timestamp: Union[str, None] = pydantic.Field(
+        title='The timestamp of the COO transaction'
+    )
+
+    @pydantic.validator('original_loc_stanox', 'loc_stanox')
+    @classmethod
+    def validate_stanox(cls, value: Union[str, None]) -> Union[str, None]:
+        """Validate the stanox."""
+        if not value or not value.strip():
+            return None
+        val = value.strip()
+        if not re.match('[0-9]{5}', val):
+            raise pydantic.ValidationError(
+                f'Invalid STANOX: {val}'
+            )
+        return val
+
+    @pydantic.validator('current_train_id', 'train_id')
+    @classmethod
+    def validate_train_id(cls, value: Union[str, None]) -> Union[str, None]:
+        """Validate the train id."""
+        if not value or not value.strip():
+            return None
+        val = value.strip()
+        if len(val) != 10:
+            raise pydantic.ValidationError(
+                f'Invalid TRUST ID: {val}'
+            )
+        return val
+
+    @pydantic.validator('original_loc_timestamp', 'dep_timestamp', 'event_timestamp')
+    @classmethod
+    def validate_timestamp(cls, value: Union[str, None]) -> Union[str, None]:
+        """Validate a timestamp."""
+        if not value or not value.strip():
+            return None
+        val = value.strip()
+        if not val.isdecimal():
+            raise pydantic.ValidationError(
+                f'Not a valid timestamp: {val}'
+            )
+        return val
+
+    @classmethod
+    @pydantic.validate_arguments
+    def nrod_factory(cls, element: dict) -> object:
+        """Return a ChangeOfLocation object from an NROD COL msg."""
+        kwargs = {**element['body'], **element['header']}
+        return cls(**kwargs)
+
+
+class ChangeOfIdentity(pydantic.BaseModel):
+    """Representation of an NROD COI message."""
+
+    source_id: str = pydantic.Field(
+        title='The source device ID',
+        alias='source_dev_id'
+    )
+
+    data_source: str = pydantic.Field(
+        title='The original data source',
+        alias='original_data_source'
+    )
+
+    source_system: str = pydantic.Field(
+        title='Source system ID',
+        alias='source_system_id'
+    )
+
+    current_train_id: Union[str, None] = pydantic.Field(
+        title='If the TRUST ID has been changed, this is the current one'
+    )
+
+    train_file_address: Optional[str] = pydantic.Field(
+        title='TOPS train file address, if applicable'
+    )
+
+    train_service_code: str = pydantic.Field(
+        title='The train service code'
+    )
+
+    revised_train_id: Union[str, None] = pydantic.Field(
+        title='The new TRUST ID'
+    )
+
+    train_id: Union[str, None] = pydantic.Field(
+        title='The TRUST ID at activation time'
+    )
+
+    event_timestamp: Union[str, None] = pydantic.Field(
+        title='The timestamp of the COI transaction'
+    )
+
+    @pydantic.validator('event_timestamp')
+    @classmethod
+    def validate_timestamp(cls, value: Union[str, None]) -> Union[str, None]:
+        """Validate a timestamp."""
+        if not value or not value.strip():
+            return None
+        val = value.strip()
+        if not val.isdecimal():
+            raise pydantic.ValidationError(
+                f'Not a valid timestamp: {val}'
+            )
+        return val
+
+    @pydantic.validator('revised_train_id', 'train_id')
+    @classmethod
+    def validate_train_id(cls, value: Union[str, None]) -> Union[str, None]:
+        """Validate the train id."""
+        if not value or not value.strip():
+            return None
+        val = value.strip()
+        if len(val) != 10:
+            raise pydantic.ValidationError(
+                f'Invalid TRUST ID: {val}'
+            )
+        return val
+
+    @classmethod
+    @pydantic.validate_arguments
+    def nrod_factory(cls, element: dict) -> object:
+        """Return a ChangeOfIdentity object from an NROD COI msg."""
+        kwargs = {**element['body'], **element['header']}
+        return cls(**kwargs)
+
+
+class ChangeOfOrigin(pydantic.BaseModel):
+    """Representation of an NRDO COO message."""
+
+    source_id: str = pydantic.Field(
+        title='The source device ID',
+        alias='source_dev_id'
+    )
+
+    data_source: str = pydantic.Field(
+        title='The original data source',
+        alias='original_data_source'
+    )
+
+    source_system: str = pydantic.Field(
+        title='Source system ID',
+        alias='source_system_id'
+    )
+
+    reason_code: str = pydantic.Field(
+        title='The reason code for the COO',
+        min_length=2,
+        max_length=2,
+        regex='[0-9A-Z]{2}'
+    )
+
+    current_train_id: Union[str, None] = pydantic.Field(
+        title='If the TRUST ID has been changed, this is the current one'
+    )
+
+    original_loc_timestamp: Union[str, None] = pydantic.Field(
+        title='The planned time associated with the original location'
+    )
+
+    train_file_address: Optional[str] = pydantic.Field(
+        title='TOPS train file address, if applicable'
+    )
+
+    train_service_code: str = pydantic.Field(
+        title='The train service code'
+    )
+
+    toc_id: str = pydantic.Field(
+        title='The TOC ID, or ZZ',
+        min_length=2,
+        max_length=2,
+        regex='[0-9A-Z]{2}'
+    )
+
+    dep_timestamp: Union[str, None] = pydantic.Field(
+        title='The departure time at the location the train is COO'
+    )
+
+    coo_timestamp: Union[str, None] = pydantic.Field(
+        title='The timestamp of the COO transaction'
+    )
+
+    division_code: str = pydantic.Field(
+        title='The TOC ID, or ZZ',
+        min_length=2,
+        max_length=2,
+        regex='[0-9A-Z]{2}'
+    )
+
+    loc_stanox: Union[str, None] = pydantic.Field(
+        title='New origin STANOX',
+        max_length=5
+    )
+
+    train_id: Union[str, None] = pydantic.Field(
+        title='TRUST ID'
+    )
+
+    original_loc_stanox: Union[str, None] = pydantic.Field(
+        title='	If the location has been revised, the original STANOX'
+    )
+
+    @pydantic.validator('original_loc_stanox', 'loc_stanox')
+    @classmethod
+    def validate_stanox(cls, value: Union[str, None]) -> Union[str, None]:
+        """Validate the stanox."""
+        if not value or not value.strip():
+            return None
+        val = value.strip()
+        if not re.match('[0-9]{5}', val):
+            raise pydantic.ValidationError(
+                f'Invalid STANOX: {val}'
+            )
+        return val
+
+    @pydantic.validator('original_loc_timestamp', 'dep_timestamp', 'coo_timestamp')
+    @classmethod
+    def validate_timestamp(cls, value: Union[str, None]) -> Union[str, None]:
+        """Validate a timestamp."""
+        if not value or not value.strip():
+            return None
+        val = value.strip()
+        if not val.isdecimal():
+            raise pydantic.ValidationError(
+                f'Not a valid timestamp: {val}'
+            )
+        return val
+
+    @pydantic.validator('current_train_id', 'train_id')
+    @classmethod
+    def validate_train_id(cls, value: Union[str, None]) -> Union[str, None]:
+        """Validate the train id."""
+        if not value or not value.strip():
+            return None
+        val = value.strip()
+        if len(val) != 10:
+            raise pydantic.ValidationError(
+                f'Invalid TRUST ID: {val}'
+            )
+        return val
+
+    @classmethod
+    @pydantic.validate_arguments
+    def nrod_factory(cls, element: dict) -> object:
+        """Return a ChangeOfOrigin object from an NROD COO msg."""
+        kwargs = {**element['body'], **element['header']}
+        return cls(**kwargs)
+
+
+class Reinstatement(pydantic.BaseModel):
+    """Representation of an NRDO reinstatement message."""
+
+    source_id: str = pydantic.Field(
+        title='The source device ID',
+        alias='source_dev_id'
+    )
+
+    data_source: str = pydantic.Field(
+        title='The original data source',
+        alias='original_data_source'
+    )
+
+    source_system: str = pydantic.Field(
+        title='Source system ID',
+        alias='source_system_id'
+    )
+
+    train_id: Union[str, None] = pydantic.Field(
+        title='TRUST ID'
+    )
+
+    current_train_id: Union[str, None] = pydantic.Field(
+        title='If the TRUST ID has been changed, this is the current one'
+    )
+
+    original_loc_timestamp: Union[str, None] = pydantic.Field(
+        title='The planned time associated with the original location'
+    )
+
+    dep_timestamp: Union[str, None] = pydantic.Field(
+        title='The departure time at the location the train is reinstated'
+    )
+
+    loc_stanox: Union[str, None] = pydantic.Field(
+        title='STANOX where the train is reinstated',
+        max_length=5
+    )
+
+    original_loc_stanox: Union[str, None] = pydantic.Field(
+        title='	If the location has been revised, the original STANOX'
+    )
+
+    reinstatement_timestamp: Union[str, None] = pydantic.Field(
+        title='The time of the reinstatement transaction'
+    )
+
+    toc_id: str = pydantic.Field(
+        title='The TOC ID, or ZZ',
+        min_length=2,
+        max_length=2,
+        regex='[0-9A-Z]{2}'
+    )
+
+    division_code: str = pydantic.Field(
+        title='The TOC ID, or ZZ',
+        min_length=2,
+        max_length=2,
+        regex='[0-9A-Z]{2}'
+    )
+
+    train_file_address: Optional[str] = pydantic.Field(
+        title='TOPS train file address, if applicable'
+    )
+
+    train_service_code: str = pydantic.Field(
+        title='The train service code'
+    )
+
+    @pydantic.validator('current_train_id', 'train_id')
+    @classmethod
+    def validate_train_id(cls, value: Union[str, None]) -> Union[str, None]:
+        """Validate the train id."""
+        if not value or not value.strip():
+            return None
+        val = value.strip()
+        if len(val) != 10:
+            raise pydantic.ValidationError(
+                f'Invalid TRUST ID: {val}'
+            )
+        return val
+
+    @pydantic.validator('original_loc_timestamp', 'dep_timestamp', 'reinstatement_timestamp')
+    @classmethod
+    def validate_timestamp(cls, value: Union[str, None]) -> Union[str, None]:
+        """Validate a timestamp."""
+        if not value or not value.strip():
+            return None
+        val = value.strip()
+        if not val.isdecimal():
+            raise pydantic.ValidationError(
+                f'Not a valid timestamp: {val}'
+            )
+        return val
+
+    @pydantic.validator('original_loc_stanox', 'loc_stanox')
+    @classmethod
+    def validate_stanox(cls, value: Union[str, None]) -> Union[str, None]:
+        """Validate the stanox."""
+        if not value or not value.strip():
+            return None
+        val = value.strip()
+        if not re.match('[0-9]{5}', val):
+            raise pydantic.ValidationError(
+                f'Invalid STANOX: {val}'
+            )
+        return val
+
+    @classmethod
+    @pydantic.validate_arguments
+    def nrod_factory(cls, element: dict) -> object:
+        """Return a Reinstatement object from an NROD reinstatement msg."""
+        kwargs = {**element['body'], **element['header']}
+        return cls(**kwargs)
+
+
 class Movement(pydantic.BaseModel):
     """Representation of an NROD movement message."""
 
@@ -67,16 +486,16 @@ class Movement(pydantic.BaseModel):
         title='ARRIVAL or DEPARTURE'
     )
 
-    gbtt_timestamp: str = pydantic.Field(
+    gbtt_timestamp: Union[str, None] = pydantic.Field(
         title='Planned (passenger) event date and time'
     )
 
-    original_loc_stanox: str = pydantic.Field(
+    original_loc_stanox: Union[str, None] = pydantic.Field(
         title='	If the location has been revised, the original STANOX'
     )
 
     planned_timestamp: Union[str, None] = pydantic.Field(
-        title='Planned event date and time'
+        title='Planned event timestamp'
     )
 
     timetable_variation: int = pydantic.Field(
@@ -87,19 +506,19 @@ class Movement(pydantic.BaseModel):
         title='The planned time associated with the original location'
     )
 
-    current_train_id: Optional[str] = pydantic.Field(
+    current_train_id: Union[str, None] = pydantic.Field(
         title='If the TRUST ID has been changed, this is the current one'
     )
 
-    delay_monitoring_point: bool = pydantic.Field(
+    delay_monitoring_point: Union[str, bool] = pydantic.Field(
         title='Is this location a delay monitoring point?'
     )
 
-    next_report_run_time: Union[str, int] = pydantic.Field(
+    next_report_run_time: Union[str, None] = pydantic.Field(
         title='Running time (minutes) to the next location'
     )
 
-    reporting_stanox: Optional[Union[str, None]] = pydantic.Field(
+    reporting_stanox: Union[str, None] = pydantic.Field(
         title='The reporting stanox'
     )
 
@@ -107,7 +526,7 @@ class Movement(pydantic.BaseModel):
         title='The actual reported event time'
     )
 
-    correction_ind: bool = pydantic.Field(
+    correction_ind: Union[str, bool] = pydantic.Field(
         title='Is this report a correction?'
     )
 
@@ -115,32 +534,32 @@ class Movement(pydantic.BaseModel):
         title='Is this an AUTOMATIC, or MANUAL report?'
     )
 
-    train_file_address: Optional[Union[str, None]] = pydantic.Field(
+    train_file_address: Union[str, None] = pydantic.Field(
         title='train file address'
     )
 
-    platform: Optional[Union[str, None]] = pydantic.Field(
+    platform: Union[str, None] = pydantic.Field(
         title='If relevant, platform identity.'
     )
 
     division_code: str = pydantic.Field(
         title='The TOC ID, or ZZ',
-        min_len=2,
-        max_len=2,
+        min_length=2,
+        max_length=2,
         regex='[0-9A-Z]{2}'
     )
 
-    train_terminated: bool = pydantic.Field(
+    train_terminated: Union[str, bool] = pydantic.Field(
         title='Has the train terminated?'
     )
 
     train_id: str = pydantic.Field(
         title='TRUST ID',
-        min_len=10,
-        max_len=10
+        min_length=10,
+        max_length=10
     )
 
-    offroute_ind: bool = pydantic.Field(
+    offroute_ind: Union[str, bool] = pydantic.Field(
         title='is the service off-route?'
     )
 
@@ -154,56 +573,59 @@ class Movement(pydantic.BaseModel):
 
     toc_id: str = pydantic.Field(
         title='The TOC ID, or ZZ',
-        min_len=2,
-        max_len=2,
+        min_length=2,
+        max_length=2,
         regex='[0-9A-Z]{2}'
     )
 
-    loc_stanox: str = pydantic.Field(
-        title='STANOX where the train is being cancelled from',
-        max_len=5
+    loc_stanox: Union[str, None] = pydantic.Field(
+        title='STANOX where the movement takes place',
+        max_length=5
     )
 
     auto_expected: Union[str, bool] = pydantic.Field(
         title='Set to "true" if an automatic report is expected'
     )
 
-    direction_indicator: Optional[Union[str, None]] = pydantic.Field(
-        'The direction of movement into this report'
+    direction_ind: Union[str, None] = pydantic.Field(
+        title='The direction of movement into this report'
     )
 
-    route: Optional[Union[str, None]] = pydantic.Field(
-        'The route number associated with this movement.'
+    route: Union[str, None] = pydantic.Field(
+        title='The route number associated with this movement.'
     )
 
     planned_event_type: PlannedEventType = pydantic.Field(
-        'The planned type of event'
+        title='The planned type of event'
     )
 
-    next_report_stanox: Optional[Union[str, None]] = pydantic.Field(
+    next_report_stanox: Union[str, None] = pydantic.Field(
         title='The next planned stanox'
     )
 
-    line_ind: Optional[Union[str, None]] = pydantic.Field(
+    line_ind: Union[str, None] = pydantic.Field(
         title='If relevant, line identity.'
     )
 
+    @pydantic.validator(
+        'auto_expected', 'delay_monitoring_point',
+        'correction_ind', 'train_terminated', 'offroute_ind')
+    @classmethod
+    def validate_bool(cls, value: Union[str, bool]) -> bool:
+        """Validate boolean values passed as string."""
+        if isinstance(value, bool):
+            return value
+        if value.strip() == 'true':
+            return True
+        return False
+
     @pydantic.validator('next_report_run_time')
     @classmethod
-    def validate_run_time(cls, value: str) -> Union[None, int]:
+    def validate_run_time(cls, value: Union[str, None]) -> Union[str, None]:
         """Validate next reported run time."""
         if not value or not value.strip():
             return None
-
-        return int(value.strip())
-
-    @pydantic.validator('auto_expected')
-    @classmethod
-    def validate_auto_exp(cls, value: str) -> bool:
-        """Validate auto expected."""
-        if value == 'true':
-            return True
-        return False
+        return value.strip()
 
     @pydantic.validator('route')
     @classmethod
@@ -214,15 +636,15 @@ class Movement(pydantic.BaseModel):
 
         return value.strip()
 
-    @pydantic.validator('direction_indicator')
+    @pydantic.validator('direction_ind')
     @classmethod
     def validate_dir(cls, value: Union[str, None]) -> Union[str, None]:
         """Validate direction."""
-        if not value:
+        if not value or not value.strip():
             return None
-
-        if value not in ['UP', 'DOWN']:
+        if value.strip() not in ['UP', 'DOWN']:
             raise pydantic.ValidationError(f'Invalid Direction: {value}')
+        return value.strip()
 
     @pydantic.validator('variation_status')
     @classmethod
@@ -236,57 +658,62 @@ class Movement(pydantic.BaseModel):
 
     @pydantic.validator('platform', 'line_ind')
     @classmethod
-    def validate_platform_line(cls, value: str) -> Union[str, None]:
+    def validate_platform_line(cls, value: Union[str, None]) -> Union[str, None]:
         """Validate platform."""
         if not value or not value.strip():
             return None
-
         return value.strip()
 
     @pydantic.validator('train_file_address')
     @classmethod
-    def validate_train_file_address(cls, value: str) -> Union[str, None]:
+    def validate_train_file_address(cls, value: Union[str, None]) -> Union[str, None]:
         """Validate the train file address."""
         if not value or not value.strip():
             return None
-
-        return value
+        return value.strip()
 
     @pydantic.validator('current_train_id')
     @classmethod
-    def validate_train_id(cls, value: str) -> Union[str, None]:
+    def validate_train_id(cls, value: Union[str, None]) -> Union[str, None]:
         """Validate the train id."""
         if not value or not value.strip():
             return None
-        if len(value) != 10:
+        val = value.strip()
+        if len(val) != 10:
             raise pydantic.ValidationError(
-                f'Invalid TRUST ID: {value}'
+                f'Invalid TRUST ID: {val}'
             )
-        return value
+        return val
 
-    @pydantic.validator('original_loc_stanox', 'reporting_stanox', 'next_report_stanox')
+    @pydantic.validator(
+        'original_loc_stanox', 'reporting_stanox',
+        'next_report_stanox', 'loc_stanox')
     @classmethod
-    def validate_stanox(cls, value: str) -> Union[str, None]:
+    def validate_stanox(cls, value: Union[str, None]) -> Union[str, None]:
         """Validate the stanox."""
         if not value or not value.strip():
             return None
-        if not re.match('[0-9]{5}', value):
+        val = value.strip()
+        if not re.match('[0-9]{5}', val):
             raise pydantic.ValidationError(
-                f'Invalid STANOX: {value}'
+                f'Invalid STANOX: {val}'
             )
-        return value
+        return val
 
     @pydantic.validator(
         'gbtt_timestamp', 'planned_timestamp',
         'original_loc_timestamp', 'actual_timestamp')
     @classmethod
-    def validate_timestamp(cls, value: str) -> Union[str, None]:
+    def validate_timestamp(cls, value: Union[str, None]) -> Union[str, None]:
         """Validate a timestamp."""
-        val = value.strip()
-        if not val:
+        if not value or not value.strip():
             return None
-
-        return int(val)
+        val = value.strip()
+        if not val.isdecimal():
+            raise pydantic.ValidationError(
+                f'Not a valid timestamp: {val}'
+            )
+        return val
 
     @classmethod
     @pydantic.validate_arguments
@@ -324,13 +751,13 @@ class Cancellation(pydantic.BaseModel):
 
     orig_loc_stanox: str = pydantic.Field(
         title='OOP Cancellations, where the service should have been',
-        max_len=5
+        max_length=5
     )
 
     toc_id: str = pydantic.Field(
         title='The TOC ID, or ZZ',
-        min_len=2,
-        max_len=2,
+        min_length=2,
+        max_length=2,
         regex='[0-9A-Z]{2}'
     )
 
@@ -340,14 +767,14 @@ class Cancellation(pydantic.BaseModel):
 
     division_code: str = pydantic.Field(
         title='The TOC ID, or ZZ',
-        min_len=2,
-        max_len=2,
+        min_length=2,
+        max_length=2,
         regex='[0-9A-Z]{2}'
     )
 
     loc_stanox: str = pydantic.Field(
         title='STANOX where the train is being cancelled from',
-        max_len=5
+        max_length=5
     )
 
     canx_timestamp: int = pydantic.Field(
@@ -356,15 +783,15 @@ class Cancellation(pydantic.BaseModel):
 
     canx_reason_code: str = pydantic.Field(
         title='The reason code for the cancellation',
-        min_len=2,
-        max_len=2,
+        min_length=2,
+        max_length=2,
         regex='[0-9A-Z]{2}'
     )
 
     train_id: str = pydantic.Field(
         title='TRUST ID',
-        min_len=10,
-        max_len=10
+        min_length=10,
+        max_length=10
     )
 
     orig_loc_timestamp: Union[int, str] = pydantic.Field(
@@ -442,21 +869,21 @@ class Activation(pydantic.BaseModel):
     schedule_end_date: str = pydantic.Field(
         title='End date of the schedule (runs to)',
         regex='[0-9]{4}-[0-9]{2}-[0-9]{2}',
-        min_len=10,
-        max_len=10
+        min_length=10,
+        max_length=10
     )
 
     train_id: str = pydantic.Field(
         title='TRUST ID',
-        min_len=10,
-        max_len=10
+        min_length=10,
+        max_length=10
     )
 
     tp_origin_timestamp: str = pydantic.Field(
         title='The date the train runs',
         regex='[0-9]{4}-[0-9]{2}-[0-9]{2}',
-        min_len=10,
-        max_len=10
+        min_length=10,
+        max_length=10
     )
 
     creation_timestamp: int = pydantic.Field(
@@ -465,7 +892,7 @@ class Activation(pydantic.BaseModel):
 
     tp_origin_stanox: Optional[str] = pydantic.Field(
         title='The STANOX for departure of the service',
-        max_len=5
+        max_length=5
     )
 
     origin_dep_timestamp: int = pydantic.Field(
@@ -478,8 +905,8 @@ class Activation(pydantic.BaseModel):
 
     toc_id: str = pydantic.Field(
         title='The TOC ID, or ZZ',
-        min_len=2,
-        max_len=2,
+        min_length=2,
+        max_length=2,
         regex='[0-9A-Z]{2}'
     )
 
@@ -493,8 +920,8 @@ class Activation(pydantic.BaseModel):
 
     train_uid: str = pydantic.Field(
         title='Unique [sic] ID of the service',
-        min_len=5,
-        max_len=6,
+        min_length=5,
+        max_length=6,
         regex='[ A-Z0-9]{5,6}'
     )
 
@@ -509,35 +936,35 @@ class Activation(pydantic.BaseModel):
 
     sched_origin_stanox: str = pydantic.Field(
         title='Origin STANOX',
-        max_len=5
+        max_length=5
     )
 
     schedule_wtt_id: str = pydantic.Field(
         title='Headcode and speed class',
-        min_len=5,
-        max_len=5
+        min_length=5,
+        max_length=5
     )
 
     schedule_start_date: str = pydantic.Field(
         title='Schedule start date (runs from)',
         regex='[0-9]{4}-[0-9]{2}-[0-9]{2}',
-        min_len=10,
-        max_len=10
+        min_length=10,
+        max_length=10
 
     )
 
     @pydantic.validator('train_uid')
     @classmethod
     def strip_uid(cls, value: str) -> str:
+        """Strip spaces from the UID."""
         return value.strip()
 
     @pydantic.validator('schedule_source')
     @classmethod
     def validate_sched_source(cls, value: str) -> str:
         """Validate the schedule source."""
-        if value == 'C' or value == 'V':
-            return value
-
+        if value.strip() in ('C', 'V'):
+            return value.strip()
         return 'V'
 
     @pydantic.validator('tp_origin_stanox', 'sched_origin_stanox')
