@@ -354,7 +354,21 @@ class VSTPSchedule(pydantic.BaseModel):
     @pydantic.validate_arguments
     def nrod_factory(cls, schedule: dict) -> object:
         """Create a VSTP schedule object from an NROD VSTP record."""
-        rows = schedule[REF]['schedule']['schedule_segment'][0]['schedule_location']
+        rows = schedule[REF]['schedule']['schedule_segment']
+        if not rows:
+            print(schedule)
+            return
+
+        rows = rows[0]
+        if not rows:
+            print(schedule)
+            return
+
+        rows = rows.get('schedule_location')
+
+        if not rows:
+            print(schedule)
+            return
         lo_record = LocationOrigin.nrod_factory(rows[0])
         lt_record = LocationTerminating.nrod_factory(rows[-1])
         return cls(

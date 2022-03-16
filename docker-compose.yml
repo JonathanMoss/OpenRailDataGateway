@@ -1,6 +1,43 @@
 version: "3"
 services:
+  fluentd:
+    container_name: fluentd
+    user: root
+    build:
+      context: "."
+      dockerfile: "./docker/fluentd/Dockerfile"
+    volumes:
+      - /var/lib/docker/containers:/fluentd/log/containers
+      - ./fluentd/fluent.conf:/fluentd/etc/fluent.conf
+      - ./logs:/output/
+    logging:
+      driver: "local"
+  nginx-proxy:
+    container_name: nginx-web
+    environment:
+      DOCKER_HOST: "unix:///var/run/docker.sock"
+    image: jwilder/nginx-proxy
+    labels:
+      com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy: "true"
+    ports:
+      - "80:80"
+      - "443:443"
+    privileged: true
+    userns_mode: host
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "conf:/etc/nginx/conf.d"
+      - "dhparam:/etc/nginx/dhparam"
+      - "certs:/etc/nginx/certs:ro"
+      - "vhost:/etc/nginx/vhost.d"
+      - "nginx-html:/usr/share/nginx/html"
   rabbitmq:
+    depends_on:
+      - nginx-proxy
     build:
       context: "."
       dockerfile: "./docker/rabbitmq/Dockerfile"
@@ -13,8 +50,10 @@ services:
       RMQ_SUB_USER: ${RMQ_SUB_USER}
       RMQ_SUB_PASS: ${RMQ_SUB_PASS}
       RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: "-rabbit log_levels [{connection,warning},{channel,warning}]"
+      VIRTUAL_HOST: ${RMQ_V_HOST}
+      VIRTUAL_PROTO: http
+      VIRTUAL_PORT: 15672
     ports:
-      - "15672:15672"
       - "5672:5672"
       - "5671:5671"
   nrod:
@@ -31,27 +70,29 @@ services:
       LOG_LEVEL: "DEBUG"
       RMQ_PORT: ${RMQ_PORT}
       RMQ_HOST: ${RMQ_HOST}
-    ports:
-      - "8000:8000"
     volumes:
       - "logs:/var/www/logs"
   prometheus:
     container_name: prometheus-svc
     restart: unless-stopped
     image: prom/prometheus
-    ports:
-      - "9091:9090"
     command: --config.file=/etc/prometheus/prometheus.yaml
     volumes:
       - ./prometheus:/etc/prometheus/
   grafana:
     image: grafana/grafana:5.0.4
-    ports:
-      - "3000:3000"
     restart: unless-stopped
     environment:
       - GF_AUTH_BASIC_ENABLED=false
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - VIRTUAL_HOST=${GRAFANA_V_HOST}
+      - VIRTUAL_PROTO=http
+      - VIRTUAL_PORT=3000
 volumes:
   logs: ~
+  conf: ~
+  dhparam: ~
+  certs: ~
+  vhost: ~
+  nginx-html: ~
