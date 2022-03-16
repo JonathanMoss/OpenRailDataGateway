@@ -24,7 +24,6 @@ Virtual Hosts:
 ```bash
 pass insert rabbitmq/v_host
 pass insert grafana/v_host
-pass insert fluentd/v_host
 ```
 
 **Note** - if you are running locally, you will need to add entries to ```/etc/hosts/```
@@ -32,7 +31,6 @@ pass insert fluentd/v_host
 ```bash
 127.0.0.1       rmq.dev.local.com  # Example
 127.0.0.1       gfa.dev.local.com  # Example
-127.0.0.1       fui.dev.local.com  # Example
 ```
 
 Then export to environment:
@@ -49,10 +47,17 @@ export RMQ_V_HOST="$(pass rabbitmq/v_host)"
 export GRAFANA_V_HOST="$(pass grafana/v_host)"
 export RMQ_HOST="rabbitmq"
 export RMQ_PORT="5672"
-export FLUENTD_UI_V_HOST="$(pass fluentd/v_host)"
 ```
 
-## Add to etc/hosts (if running locally)
-127.0.0.1       rmq.dev.local.com
-127.0.0.1       gfa.dev.local.com
-127.0.0.1       fui.dev.local.com
+### Step 2 - clone the repo, and change directory
+
+```bash
+git clone git@github.com:JonathanMoss/OpenRailDataGateway.git
+cd OpenRailDataGateway
+```
+
+### Step 3, Build and Run
+```bash
+docker-compose build
+docker-compose up -d
+```
