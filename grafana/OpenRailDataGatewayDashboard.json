@@ -1,8 +1,8 @@
 {
   "__inputs": [
     {
-      "name": "DS_GATEWAY",
-      "label": "gateway",
+      "name": "DS_PROMETHEUS",
+      "label": "Prometheus",
       "description": "",
       "type": "datasource",
       "pluginId": "prometheus",
@@ -54,7 +54,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_GATEWAY}",
+      "datasource": "${DS_PROMETHEUS}",
       "fill": 1,
       "gridPos": {
         "h": 9,
@@ -137,7 +137,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_GATEWAY}",
+      "datasource": "${DS_PROMETHEUS}",
       "decimals": null,
       "fill": 0,
       "gridPos": {
@@ -225,7 +225,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_GATEWAY}",
+      "datasource": "${DS_PROMETHEUS}",
       "fill": 1,
       "gridPos": {
         "h": 8,
@@ -308,7 +308,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_GATEWAY}",
+      "datasource": "${DS_PROMETHEUS}",
       "fill": 1,
       "gridPos": {
         "h": 9,
@@ -393,7 +393,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_GATEWAY}",
+      "datasource": "${DS_PROMETHEUS}",
       "fill": 1,
       "gridPos": {
         "h": 9,
@@ -476,7 +476,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_GATEWAY}",
+      "datasource": "${DS_PROMETHEUS}",
       "fill": 1,
       "gridPos": {
         "h": 9,
@@ -563,7 +563,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_GATEWAY}",
+      "datasource": "${DS_PROMETHEUS}",
       "description": "Inbound NROD message latency",
       "fill": 1,
       "gridPos": {
@@ -687,5 +687,5 @@
   "timezone": "",
   "title": "Open Rail Data Gateway",
   "uid": "xQdYnZE7k",
-  "version": 17
+  "version": 2
 }
