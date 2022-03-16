@@ -89,6 +89,21 @@ services:
       - VIRTUAL_HOST=${GRAFANA_V_HOST}
       - VIRTUAL_PROTO=http
       - VIRTUAL_PORT=3000
+  grafana-dashboards:
+    image: alpine:3.10
+    depends_on:
+      - grafana
+    volumes:
+      - ./grafana:/grafana
+    command: >
+      /bin/sh -c "
+        apk add --no-cache curl
+        echo 'waiting for grafana'
+        sleep 5s
+        cd /grafana
+        curl --request POST http://grafana:3000/api/datasources --header 'Content-Type: application/json' -d @datasources.json
+        curl --request POST http://grafana:3000/api/dashboards/db --header 'Content-Type: application/json' -d @OpenRailDataGatewayDashboard.json"
+        curl --request POST http://grafana:3000/api/dashboards/db --header 'Content-Type: application/json' -d @RabbitMQDashboard.json"
 volumes:
   logs: ~
   conf: ~
