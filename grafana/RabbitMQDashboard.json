@@ -1,4 +1,4 @@
-{
+{"dashboard": {
   "__inputs": [
     {
       "name": "DS_PROMETHEUS",
@@ -5838,4 +5838,5 @@
   "title": "RabbitMQ-Overview",
   "uid": "Kn5xm-gZk",
   "version": 1
+}
 }
