@@ -1,4 +1,4 @@
-{
+{"dashboard": {
   "__inputs": [
     {
       "name": "DS_PROMETHEUS",
@@ -688,4 +688,5 @@
   "title": "Open Rail Data Gateway",
   "uid": "xQdYnZE7k",
   "version": 2
+}
 }
