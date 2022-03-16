@@ -28,4 +28,10 @@ class TestVSTPSchedule:
             json.loads(
                 raw_vstp
             )
-        ).json()
+        ).lo_record
+
+        del_vstp = json.loads(raw_vstp)
+        del_vstp['VSTPCIFMsgV1']['schedule']['schedule_segment'] = [None]
+
+        results = vstp.VSTPSchedule.nrod_factory(del_vstp)
+        assert not results.lo_record

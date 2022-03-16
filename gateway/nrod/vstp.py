@@ -126,24 +126,29 @@ class BasicScheduleExtra(pydantic.BaseModel):
     )
 
     uic_code: str = pydantic.Field(
-        title='UIC code'
+        title='UIC code',
+        default=None
     )
 
     atoc_code: str = pydantic.Field(
-        title='ATOC code'
+        title='ATOC code',
+        default=None
     )
 
     applicable_timetable_code: str = pydantic.Field(
         title='Applicable for delay monitoring',
-        alias='applicable_timetable'
+        alias='applicable_timetable',
+        default=None
     )
 
     @classmethod
     @pydantic.validate_arguments
     def nrod_factory(cls, schedule: dict) -> object:
-        """Creates a BasicSchedule object from an nrod vstp schedule."""
+        """Creates a BasicScheduleExtra object from an nrod vstp schedule."""
         sched = schedule[REF]['schedule']
         seg = schedule[REF]['schedule']['schedule_segment'][0]
+        if not seg:
+            return cls(**sched)
         return cls(**sched, **seg)
 
 
@@ -179,86 +184,86 @@ class BasicSchedule(pydantic.BaseModel):
         regex='[10]{7}'
     )
 
-    bank_holiday_running: str = pydantic.Field(
+    bank_holiday_running: Optional[str] = pydantic.Field(
         title='CIF Bank holiday running?',
-        alias='CIF_bank_holiday_running'
+        alias='CIF_bank_holiday_running',
     )
 
-    train_status: str = pydantic.Field(
-        title='The status code of the service'
+    train_status: Optional[str] = pydantic.Field(
+        title='The status code of the service',
     )
 
-    train_category: str = pydantic.Field(
+    train_category: Optional[str] = pydantic.Field(
         title='Service category code',
-        alias='CIF_train_category'
+        alias='CIF_train_category',
     )
 
-    train_identity: str = pydantic.Field(
+    train_identity: Optional[str] = pydantic.Field(
         title='The headcode of the service',
-        alias='signalling_id'
+        alias='signalling_id',
     )
 
-    course_indicator: str = pydantic.Field(
+    course_indicator: Optional[str] = pydantic.Field(
         title='The course indicator',
         alias='CIF_course_indicator'
     )
 
-    train_service_code: str = pydantic.Field(
+    train_service_code: Optional[str] = pydantic.Field(
         title='The train service code',
         alias='CIF_train_service_code'
     )
 
-    portion_id: str = pydantic.Field(
+    portion_id: Optional[str] = pydantic.Field(
         title='Portion ID BUSSEC',
         default='X'
     )
 
-    power_type: str = pydantic.Field(
+    power_type: Optional[str] = pydantic.Field(
         title='The service planned power type',
         alias='CIF_power_type'
     )
 
-    timing_load: str = pydantic.Field(
+    timing_load: Optional[str] = pydantic.Field(
         title='The service timing load',
         alias='CIF_timing_load'
     )
 
-    speed: str = pydantic.Field(
+    speed: Optional[str] = pydantic.Field(
         title='The planned service speed value',
         alias='CIF_speed'
     )
 
-    operating_characteristics: str = pydantic.Field(
+    operating_characteristics: Optional[str] = pydantic.Field(
         title='Operating characteristics for the service.',
         alias='CIF_operating_characteristics'
     )
 
-    seating_class: str = pydantic.Field(
+    seating_class: Optional[str] = pydantic.Field(
         title='Planned accomodation code',
         alias='CIF_train_class'
     )
 
-    sleepers: str = pydantic.Field(
+    sleepers: Optional[str] = pydantic.Field(
         title='Sleeper service code',
         alias='CIF_sleepers'
     )
 
-    reservations: str = pydantic.Field(
+    reservations: Optional[str] = pydantic.Field(
         title='Service reservations code',
         alias='CIF_reservations'
     )
 
-    connection_indicator: str = pydantic.Field(
+    connection_indicator: Optional[str] = pydantic.Field(
         title='The service connection indicator',
         alias='CIF_connection_indicator'
     )
 
-    catering_code: str = pydantic.Field(
+    catering_code: Optional[str] = pydantic.Field(
         title='Catering code',
         alias='CIF_catering_code'
     )
 
-    service_branding: str = pydantic.Field(
+    service_branding: Optional[str] = pydantic.Field(
         title='Service branding code',
         alias='CIF_service_branding'
     )
@@ -286,6 +291,9 @@ class BasicSchedule(pydantic.BaseModel):
         """Creates a BasicSchedule object from an nrod vstp schedule."""
         sched = schedule[REF]['schedule']
         seg = schedule[REF]['schedule']['schedule_segment'][0]
+        if not seg:
+            return cls(**sched)
+
         return cls(**sched, **seg)
 
 
@@ -318,6 +326,7 @@ class VSTPSchedule(pydantic.BaseModel):
     class Config:
         """Configure pydantic."""
         pass
+
     message_details: MessageDetails = pydantic.Field(
         title='Details of the message'
     )
@@ -326,11 +335,11 @@ class VSTPSchedule(pydantic.BaseModel):
         title='The basic schedule (BS) record'
     )
 
-    basic_schedule_extra: BasicScheduleExtra = pydantic.Field(
+    basic_schedule_extra: Optional[BasicScheduleExtra] = pydantic.Field(
         title='The BX record'
     )
 
-    lo_record: LocationOrigin = pydantic.Field(
+    lo_record: Optional[LocationOrigin] = pydantic.Field(
         title='The LO Record'
     )
 
@@ -338,7 +347,7 @@ class VSTPSchedule(pydantic.BaseModel):
         title='LI records'
     )
 
-    lt_record: LocationTerminating = pydantic.Field(
+    lt_record: Optional[LocationTerminating] = pydantic.Field(
         title='The LT Record.'
     )
 
@@ -354,28 +363,18 @@ class VSTPSchedule(pydantic.BaseModel):
     @pydantic.validate_arguments
     def nrod_factory(cls, schedule: dict) -> object:
         """Create a VSTP schedule object from an NROD VSTP record."""
-        rows = schedule[REF]['schedule']['schedule_segment']
-        if not rows:
-            print(schedule)
-            return
+        kwargs = {
+            'message_details': MessageDetails.nrod_factory(schedule),
+            'basic_schedule': BasicSchedule.nrod_factory(schedule)
+        }
 
-        rows = rows[0]
+        rows = schedule[REF]['schedule']['schedule_segment'][0]
         if not rows:
-            print(schedule)
-            return
+            return cls(**kwargs)
 
-        rows = rows.get('schedule_location')
-
-        if not rows:
-            print(schedule)
-            return
-        lo_record = LocationOrigin.nrod_factory(rows[0])
-        lt_record = LocationTerminating.nrod_factory(rows[-1])
-        return cls(
-            message_details=MessageDetails.nrod_factory(schedule),
-            basic_schedule=BasicSchedule.nrod_factory(schedule),
-            basic_schedule_extra=BasicScheduleExtra.nrod_factory(schedule),
-            lo_record=lo_record,
-            lt_record=lt_record,
-            li_records=VSTPSchedule.get_intermediate_rows(rows)
-        )
+        kwargs['basic_schedule_extra'] = BasicScheduleExtra.nrod_factory(schedule)
+        rows = rows['schedule_location']
+        kwargs['lo_record'] = LocationOrigin.nrod_factory(rows[0])
+        kwargs['lt_record'] = LocationTerminating.nrod_factory(rows[-1])
+        kwargs['li_records'] = VSTPSchedule.get_intermediate_rows(rows)
+        return cls(**kwargs)
