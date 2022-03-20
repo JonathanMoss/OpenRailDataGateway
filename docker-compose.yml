@@ -80,7 +80,7 @@ services:
     volumes:
       - ./prometheus:/etc/prometheus/
   grafana:
-    image: grafana/grafana:5.0.4
+    image: grafana/grafana:latest
     restart: unless-stopped
     environment:
       - GF_AUTH_BASIC_ENABLED=false
