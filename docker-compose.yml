@@ -81,6 +81,7 @@ services:
       - ./prometheus:/etc/prometheus/
   grafana:
     image: grafana/grafana:latest
+    user: "1000"
     restart: unless-stopped
     environment:
       - GF_AUTH_BASIC_ENABLED=false
