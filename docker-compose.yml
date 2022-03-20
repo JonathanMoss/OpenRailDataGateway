@@ -89,6 +89,15 @@ services:
       - VIRTUAL_HOST=${GRAFANA_V_HOST}
       - VIRTUAL_PROTO=http
       - VIRTUAL_PORT=3000
+  loki:
+    image: grafana/loki:1.4.1
+    command: -config.file=/etc/loki/local-config.yaml
+  promtail:
+    image: grafana/promtail:1.4.1
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers
+      - ./promtail/docker-config.yml:/etc/promtail/docker-config.yml
+    command: -config.file=/etc/promtail/docker-config.yml
   grafana-dashboards:
     image: alpine:3.10
     depends_on:
