@@ -286,56 +286,63 @@ class Listener(stomp.ConnectionListener, pydantic.BaseModel):
                 act = Activation.nrod_factory(element)
                 self.act_rmq.send_message(act.json())
             except pydantic.ValidationError as err:
-                print(err)
-                print(element)
+                LOG.logger.error("Validation Error: ACT")
+                LOG.logger.error(err)
+                LOG.logger.error(element)
                 return
         if msg_type == '0002':
             try:
                 canx = Cancellation.nrod_factory(element)
                 self.canx_rmq.send_message(canx.json())
             except pydantic.ValidationError as err:
-                print(err)
-                print(element)
+                LOG.logger.error("Validation Error: CANX")
+                LOG.logger.error(err)
+                LOG.logger.error(element)
                 return
         if msg_type == '0003':
             try:
                 mvt = Movement.nrod_factory(element)
                 self.mvt_rmq.send_message(mvt.json())
             except pydantic.ValidationError as err:
-                print(err)
-                print(element)
+                LOG.logger.error("Validation Error: MVT")
+                LOG.logger.error(err)
+                LOG.logger.error(element)
                 return
         if msg_type == '0005':
             try:
                 ren = Reinstatement.nrod_factory(element)
                 self.ren_rmq.send_message(ren.json())
             except pydantic.ValidationError as err:
-                print(err)
-                print(element)
+                LOG.logger.error("Validation Error: Reinstatement")
+                LOG.logger.error(err)
+                LOG.logger.error(element)
                 return
         if msg_type == '0006':
             try:
                 coo = ChangeOfOrigin.nrod_factory(element)
                 self.coo_rmq.send_message(coo.json())
             except pydantic.ValidationError as err:
-                print(err)
-                print(element)
+                LOG.logger.error("Validation Error: COO")
+                LOG.logger.error(err)
+                LOG.logger.error(element)
                 return
         if msg_type == '0007':
             try:
                 coi = ChangeOfIdentity.nrod_factory(element)
                 self.coi_rmq.send_message(coi.json())
             except pydantic.ValidationError as err:
-                print(err)
-                print(element)
+                LOG.logger.error("Validation Error: COI")
+                LOG.logger.error(err)
+                LOG.logger.error(element)
                 return
         if msg_type == '0008':
             try:
-                col = ChangeOfIdentity.nrod_factory(element)
+                col = ChangeOfLocation.nrod_factory(element)
                 self.col_rmq.send_message(col.json())
             except pydantic.ValidationError as err:
-                print(err)
-                print(element)
+                LOG.logger.error("Validation Error: COL")
+                LOG.logger.error(err)
+                LOG.logger.error(element)
                 return
 
     @pydantic.validate_arguments(config=dict(arbitrary_types_allowed=True))
@@ -374,8 +381,9 @@ class Listener(stomp.ConnectionListener, pydantic.BaseModel):
             vstp = VSTPSchedule.nrod_factory(element)
             self.vstp_rmq.send_message(vstp.json())
         except pydantic.ValidationError as err:
-            print(err)
-            print(element)
+            LOG.logger.error("Validation Error: VSTP")
+            LOG.logger.error(err)
+            LOG.logger.error(element)
 
     def on_heartbeat_timeout(self):
         """Called when a STOMP heartbeat is not RX at the expected interval."""
