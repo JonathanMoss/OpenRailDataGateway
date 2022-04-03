@@ -11,6 +11,11 @@ DT_REGEX = '[0-9]{4}-[0-9]{2}-[0-9]{2}'
 class ScheduleRow(pydantic.BaseModel):
     """Representation of a schedule row."""
 
+    class Config:
+        """Pydantic configuration."""
+
+        allow_population_by_field_name = True
+
     wta: Union[str, None] = pydantic.Field(
         title='Working Time Arrival',
         alias='scheduled_arrival_time',
@@ -120,6 +125,11 @@ class LocationTerminating(ScheduleRow):
 class BasicScheduleExtra(pydantic.BaseModel):
     """Representation of a VSTP BX record."""
 
+    class Config:
+        """Pydantic configuration."""
+
+        allow_population_by_field_name = True
+
     traction_class: Union[None, str] = pydantic.Field(
         title='Traction Class (not used)',
         default=None
@@ -154,6 +164,11 @@ class BasicScheduleExtra(pydantic.BaseModel):
 
 class BasicSchedule(pydantic.BaseModel):
     """Representation of a VSTP BS record."""
+
+    class Config:
+        """Pydantic configuration."""
+
+        allow_population_by_field_name = True
 
     transaction_type: str = pydantic.Field(
         title='The type of transaction, usually CREATE'

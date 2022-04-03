@@ -76,6 +76,11 @@ ALL_MESSAGE_L = Histogram('inbound_message_latency', 'Inbound NROD message laten
 class MessageHeader(pydantic.BaseModel):
     """A representation of a message header."""
 
+    class Config:
+        """Pydantic configuration."""
+
+        allow_population_by_field_name = True
+
     destination: str = pydantic.Field(
         title='The message topic'
     )
@@ -101,20 +106,24 @@ class Message(pydantic.BaseModel):
 
     class Config:
         """Pydantic configuration."""
-        arbitrary_types_allowed = True
+
+        allow_population_by_field_name = True
 
     headers: MessageHeader = pydantic.Field(
         title='The headers sent within the message'
     )
 
-    body: str = pydantic.Field(
-        title='The message body, received as str, converted to list of dict'
+    body: List[dict] = pydantic.Field(
+        title='The message body, received as str, converted to list of dict',
+        default_factory=list
     )
 
-    @pydantic.validator('body')
+    @pydantic.validator('body', pre=True)
     @classmethod
-    def convert_body(cls, value) -> dict:
+    def convert_body(cls, value: str) -> List[dict]:
         """Convert body to list from json."""
+        if isinstance(value, list):
+            return value
         return json.loads(value)
 
     @property

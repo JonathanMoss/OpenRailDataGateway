@@ -50,6 +50,11 @@ class MovementEventType(Enum):
 class ChangeOfLocation(pydantic.BaseModel):
     """Representation of an NROD COL message."""
 
+    class Config:
+        """Pydantic configuration."""
+
+        allow_population_by_field_name = True
+
     source_id: str = pydantic.Field(
         title='The source device ID',
         alias='source_dev_id'
@@ -152,6 +157,11 @@ class ChangeOfLocation(pydantic.BaseModel):
 class ChangeOfIdentity(pydantic.BaseModel):
     """Representation of an NROD COI message."""
 
+    class Config:
+        """Pydantic configuration."""
+
+        allow_population_by_field_name = True
+
     source_id: str = pydantic.Field(
         title='The source device ID',
         alias='source_dev_id'
@@ -227,6 +237,11 @@ class ChangeOfIdentity(pydantic.BaseModel):
 
 class ChangeOfOrigin(pydantic.BaseModel):
     """Representation of an NRDO COO message."""
+
+    class Config:
+        """Pydantic configuration."""
+
+        allow_population_by_field_name = True
 
     source_id: str = pydantic.Field(
         title='The source device ID',
@@ -351,6 +366,11 @@ class ChangeOfOrigin(pydantic.BaseModel):
 class Reinstatement(pydantic.BaseModel):
     """Representation of an NRDO reinstatement message."""
 
+    class Config:
+        """Pydantic configuration."""
+
+        allow_population_by_field_name = True
+
     source_id: str = pydantic.Field(
         title='The source device ID',
         alias='source_dev_id'
@@ -466,6 +486,11 @@ class Reinstatement(pydantic.BaseModel):
 
 class Movement(pydantic.BaseModel):
     """Representation of an NROD movement message."""
+
+    class Config:
+        """Pydantic configuration."""
+
+        allow_population_by_field_name = True
 
     source_id: str = pydantic.Field(
         title='The source device ID',
@@ -726,6 +751,11 @@ class Movement(pydantic.BaseModel):
 class Cancellation(pydantic.BaseModel):
     """Representation of an NROD cancellation message."""
 
+    class Config:
+        """Pydantic configuration."""
+
+        allow_population_by_field_name = True
+
     source_id: str = pydantic.Field(
         title='The source device ID',
         alias='source_dev_id'
@@ -749,7 +779,7 @@ class Cancellation(pydantic.BaseModel):
         title='The train service code'
     )
 
-    orig_loc_stanox: str = pydantic.Field(
+    orig_loc_stanox: Union[str, None] = pydantic.Field(
         title='OOP Cancellations, where the service should have been',
         max_length=5
     )
@@ -794,7 +824,7 @@ class Cancellation(pydantic.BaseModel):
         max_length=10
     )
 
-    orig_loc_timestamp: Union[int, str] = pydantic.Field(
+    orig_loc_timestamp: Union[int, str, None] = pydantic.Field(
         title='OOP Cancellations, dep time where the train should have been'
     )
 
@@ -843,17 +873,17 @@ class Cancellation(pydantic.BaseModel):
 class Activation(pydantic.BaseModel):
     """Representation of an NROD activation message."""
 
-    source_id: str = pydantic.Field(
+    source_id: Union[str, None] = pydantic.Field(
         title='The source device ID',
         alias='source_dev_id'
     )
 
-    data_source: str = pydantic.Field(
+    data_source: Union[str, None] = pydantic.Field(
         title='The original data source',
         alias='original_data_source'
     )
 
-    source_system: str = pydantic.Field(
+    source_system: Union[str, None] = pydantic.Field(
         title='Source system ID',
         alias='source_system_id'
     )

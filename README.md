@@ -3,9 +3,9 @@ Rail open data gateway - deploys a connection to all NROD subscription services
 and places messages on a RabbitMQ Broker for consumption by other services.
 
 ### Step 1 - identify and prepare the host
-As a containerised application, the application stack can be run in numerous places but this readme assumes running on a GNU/Linux system of some description.
+As a containerised application, the application stack can be ran in numerous environments but this readme assumes running on a GNU/Linux system of some description.
 
-We currently run the application stack on a Ubuntu 20.04 LTS small business server on our local network but it can easily be run on a VPS, AWS EC2 instance, hired bare metal server etc...
+We currently run the application stack on a Ubuntu 20.04 LTS small business server on our local network but it can easily be run on a VPS, AWS EC2 instance, hired bare metal server etc... or indeed on localhost.
 
 ### Step 2 - Prerequisites
 - docker
@@ -14,18 +14,26 @@ We currently run the application stack on a Ubuntu 20.04 LTS small business serv
 - credentials for Network Rail open data feeds (NROD)
 
 ### Step 4 - NROD permissions
-The services that connect to NROD assume the following NROD permissions; users can set match the assumed permissions by logging on at ```datafeeds.networkrail.co.uk``` and navigating to ```My Feeds``` and setting your subscription details to:
-- Train Movements: All TOCs
-- TD: All Signalling Areas
-- VSTP: All TOCs
-- TSR: All Routes
-- RTPPM: All TOCs
-- SCHEDULE: All Full Daily, All Update Daily
+The services that connect to NROD assume the following NROD subscriptions; users can set match these subscriptions by logging on to ```datafeeds.networkrail.co.uk``` and navigating to ```My Feeds``` and setting your subscription to:
+- Train Movements: **All TOCs**
+- TD: **All Signalling Areas**
+- VSTP: **All TOCs**
+- TSR: **All Routes**
+- RTPPM: **All TOCs**
+- SCHEDULE: **All Full Daily**, **All Update Daily**
 
-You can of course tailor the subscription details but you will need to refactor the corresponding consuming service within ```nrod/nrod_connection.py```
+You can of course tailor the subscription to your particular use case but you will need to refactor the corresponding consuming service within ```nrod/nrod_connection.py```:
+
+```bash
+TD_TOPIC = 'TD_ALL_SIG_AREA'
+MVT_TOPIC = 'TRAIN_MVT_ALL_TOC'
+VSTP_TOPIC = 'VSTP_ALL'
+PPM_TOPIC = 'RTPPM_ALL'
+TSR_TOPIC = 'TSR_ALL_ROUTE'
+```
 
 ### Step 5 - environment variables
-To function correctly, the following environment variables need to be set:
+To function correctly, the following environment variables need to be set and available:
 ```bash
 RMQ_ADMIN_USER
 RMQ_ADMIN_PASS
@@ -40,20 +48,20 @@ GRAFANA_V_HOST
 RMQ_HOST
 RMQ_PORT
 ```
-**NROD_USER** and **NROD_PASS** need to be set to the NROD access credentials.
+**NROD_USER** and **NROD_PASS** need to be set to your NROD access credentials.
 
 The following variables **must** be set thus:
 - **RMQ_HOST**="rabbitmq"
 - **RMQ_PORT**="5672"
 
-**RMQ_V_HOST** and **GRAFANA_V_HOST** need to be set to the FQDN where the front end will be accessed from
+**RMQ_V_HOST** and **GRAFANA_V_HOST** need to be set to the FQDN from where the front end will be accessed.
 
 as an example, we use the following:
 ```bash
 export RMQ_V_HOST="rmq.dev.local.com"
 export GRAFANA_V_HOST="gfa.dev.local.com"
 ```
-As we are running the services locally, and therefore the above hostnames will not resolve using DNS (As they are on our internal network), we are required to do add the following records to ```/etc/hosts``` on each machine we will be using to access the application front-end:
+As we are running the services locally, and therefore the above hostnames will not resolve using DNS (As they are on our internal network), we are required to do add the following records to ```/etc/hosts``` on each machine that we will be using to access the application front-end:
 
 ```bash
 192.168.1.170      rmq.dev.local.com  # Example
@@ -115,8 +123,66 @@ git clone git@github.com:JonathanMoss/OpenRailDataGateway.git
 cd OpenRailDataGateway
 ```
 
-### Step 7, Build and Run
+### Step 7 - Build and Run
 ```bash
 docker-compose build
 docker-compose up -d
 ```
+
+# Testing
+
+### Unit Tests
+
+We provide a set of unit tests with moderate code coverage which use ```pytest``` as the testing framework.
+
+It is recommended that you create a virtual environment for testing; we provide a requirements.txt for this purpose, e.g.
+
+```bash
+python3 -m venv ~/nrod_gateway_venv
+. ~/nrod_gateway_venv/bin/activate
+pip3 install -r requirements.txt
+```
+
+If you are running the tests on a local machine, where the environment variables described above have not been set, then export the following variables:
+```bash
+export LOG_LEVEL="DEBUG"
+export LOG_DIR="test/logs/"
+export RMQ_HOST="rabbitmq"
+export RMQ_PORT="5672"
+```
+Now navigate to the root folder, and type to run all tests:
+```bash
+pytest test/unit_test/
+```
+### Integration Tests
+
+TODO: Not yet implemented.
+
+# Schema & data modelling/validation
+
+### Schema
+
+Within the application stack, we validate and later serialise NROD data prior to placing on the broker for consumption; the modelling we have employed is to fit our particular use case however, we provide detailed schema for each message type placed on the broker. These are available in ```schema```
+
+### Modelling & Validation
+
+We employ the use of ```pydantic```, which is used to validate data and to build representative models of the NROD data.
+
+In connection with the schema described above, users may wish to peruse the models and validation defined in the following files, to gain a deeper understanding of the type and data validation we have employed:
+
+```bash
+gateway/nrod/c_class.py
+gateway/nrod/s_class.py
+gateway/nrod/train_movement.py
+gateway/nrod/vstp.py
+```
+
+# TODO
+
+This is a work in progress; we are currently working on the following:
+
+- Pydantic modelling for RTPPM
+- Pydantic modelling for TSR
+- CIF Manager & implement SFTP service
+- Lifts/Platforms API
+- Darwin Feeds?

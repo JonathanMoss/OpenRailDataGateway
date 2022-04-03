@@ -15,6 +15,11 @@ class MsgType(Enum):
 class SClassMessage(pydantic.BaseModel):
     """Representation of an s-class message."""
 
+    class Config:
+        """pydantic configuration."""
+
+        allow_population_by_field_name = True
+
     time: int = pydantic.Field(
         title='The timestamp of the message'
     )

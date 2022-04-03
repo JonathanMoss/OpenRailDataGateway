@@ -1,0 +1,238 @@
+{
+  "title": "Movement",
+  "description": "Representation of an NROD movement message.",
+  "type": "object",
+  "properties": {
+    "source_dev_id": {
+      "title": "The source device ID",
+      "type": "string"
+    },
+    "original_data_source": {
+      "title": "The original data source",
+      "type": "string"
+    },
+    "source_system_id": {
+      "title": "Source system ID",
+      "type": "string"
+    },
+    "event_type": {
+      "title": "ARRIVAL or DEPARTURE",
+      "allOf": [
+        {
+          "$ref": "#/definitions/MovementEventType"
+        }
+      ]
+    },
+    "gbtt_timestamp": {
+      "title": "Planned (passenger) event date and time",
+      "type": "string"
+    },
+    "original_loc_stanox": {
+      "title": "\tIf the location has been revised, the original STANOX",
+      "type": "string"
+    },
+    "planned_timestamp": {
+      "title": "Planned event timestamp",
+      "type": "string"
+    },
+    "timetable_variation": {
+      "title": "minutes variation from the scheduled time at this location",
+      "type": "integer"
+    },
+    "original_loc_timestamp": {
+      "title": "The planned time associated with the original location",
+      "type": "string"
+    },
+    "current_train_id": {
+      "title": "If the TRUST ID has been changed, this is the current one",
+      "type": "string"
+    },
+    "delay_monitoring_point": {
+      "title": "Is this location a delay monitoring point?",
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "boolean"
+        }
+      ]
+    },
+    "next_report_run_time": {
+      "title": "Running time (minutes) to the next location",
+      "type": "string"
+    },
+    "reporting_stanox": {
+      "title": "The reporting stanox",
+      "type": "string"
+    },
+    "actual_timestamp": {
+      "title": "The actual reported event time",
+      "type": "string"
+    },
+    "correction_ind": {
+      "title": "Is this report a correction?",
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "boolean"
+        }
+      ]
+    },
+    "event_source": {
+      "title": "Is this an AUTOMATIC, or MANUAL report?",
+      "allOf": [
+        {
+          "$ref": "#/definitions/EventSource"
+        }
+      ]
+    },
+    "train_file_address": {
+      "title": "train file address",
+      "type": "string"
+    },
+    "platform": {
+      "title": "If relevant, platform identity.",
+      "type": "string"
+    },
+    "division_code": {
+      "title": "The TOC ID, or ZZ",
+      "maxLength": 2,
+      "minLength": 2,
+      "pattern": "[0-9A-Z]{2}",
+      "type": "string"
+    },
+    "train_terminated": {
+      "title": "Has the train terminated?",
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "boolean"
+        }
+      ]
+    },
+    "train_id": {
+      "title": "TRUST ID",
+      "maxLength": 10,
+      "minLength": 10,
+      "type": "string"
+    },
+    "offroute_ind": {
+      "title": "is the service off-route?",
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "boolean"
+        }
+      ]
+    },
+    "variation_status": {
+      "title": "The variation status detail",
+      "type": "string"
+    },
+    "train_service_code": {
+      "title": "The train service code",
+      "type": "string"
+    },
+    "toc_id": {
+      "title": "The TOC ID, or ZZ",
+      "maxLength": 2,
+      "minLength": 2,
+      "pattern": "[0-9A-Z]{2}",
+      "type": "string"
+    },
+    "loc_stanox": {
+      "title": "STANOX where the movement takes place",
+      "maxLength": 5,
+      "type": "string"
+    },
+    "auto_expected": {
+      "title": "Set to \"true\" if an automatic report is expected",
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "boolean"
+        }
+      ]
+    },
+    "direction_ind": {
+      "title": "The direction of movement into this report",
+      "type": "string"
+    },
+    "route": {
+      "title": "The route number associated with this movement.",
+      "type": "string"
+    },
+    "planned_event_type": {
+      "title": "The planned type of event",
+      "allOf": [
+        {
+          "$ref": "#/definitions/PlannedEventType"
+        }
+      ]
+    },
+    "next_report_stanox": {
+      "title": "The next planned stanox",
+      "type": "string"
+    },
+    "line_ind": {
+      "title": "If relevant, line identity.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "source_dev_id",
+    "original_data_source",
+    "source_system_id",
+    "event_type",
+    "timetable_variation",
+    "delay_monitoring_point",
+    "actual_timestamp",
+    "correction_ind",
+    "event_source",
+    "division_code",
+    "train_terminated",
+    "train_id",
+    "offroute_ind",
+    "variation_status",
+    "train_service_code",
+    "toc_id",
+    "auto_expected",
+    "planned_event_type"
+  ],
+  "definitions": {
+    "MovementEventType": {
+      "title": "MovementEventType",
+      "description": "Enumeration of valid movement event types.",
+      "enum": [
+        "ARRIVAL",
+        "DEPARTURE"
+      ]
+    },
+    "EventSource": {
+      "title": "EventSource",
+      "description": "Enumeration of a valid movement event source.",
+      "enum": [
+        "MANUAL",
+        "AUTOMATIC"
+      ]
+    },
+    "PlannedEventType": {
+      "title": "PlannedEventType",
+      "description": "Enumeration of a valid planned event type.",
+      "enum": [
+        "DEPARTURE",
+        "ARRIVAL",
+        "DESTINATION"
+      ]
+    }
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "title": "Reinstatement",
+  "description": "Representation of an NRDO reinstatement message.",
+  "type": "object",
+  "properties": {
+    "source_dev_id": {
+      "title": "The source device ID",
+      "type": "string"
+    },
+    "original_data_source": {
+      "title": "The original data source",
+      "type": "string"
+    },
+    "source_system_id": {
+      "title": "Source system ID",
+      "type": "string"
+    },
+    "train_id": {
+      "title": "TRUST ID",
+      "type": "string"
+    },
+    "current_train_id": {
+      "title": "If the TRUST ID has been changed, this is the current one",
+      "type": "string"
+    },
+    "original_loc_timestamp": {
+      "title": "The planned time associated with the original location",
+      "type": "string"
+    },
+    "dep_timestamp": {
+      "title": "The departure time at the location the train is reinstated",
+      "type": "string"
+    },
+    "loc_stanox": {
+      "title": "STANOX where the train is reinstated",
+      "maxLength": 5,
+      "type": "string"
+    },
+    "original_loc_stanox": {
+      "title": "If the location has been revised, the original STANOX",
+      "type": "string"
+    },
+    "reinstatement_timestamp": {
+      "title": "The time of the reinstatement transaction",
+      "type": "string"
+    },
+    "toc_id": {
+      "title": "The TOC ID, or ZZ",
+      "maxLength": 2,
+      "minLength": 2,
+      "pattern": "[0-9A-Z]{2}",
+      "type": "string"
+    },
+    "division_code": {
+      "title": "The TOC ID, or ZZ",
+      "maxLength": 2,
+      "minLength": 2,
+      "pattern": "[0-9A-Z]{2}",
+      "type": "string"
+    },
+    "train_file_address": {
+      "title": "TOPS train file address, if applicable",
+      "type": "string"
+    },
+    "train_service_code": {
+      "title": "The train service code",
+      "type": "string"
+    }
+  },
+  "required": [
+    "source_dev_id",
+    "original_data_source",
+    "source_system_id",
+    "toc_id",
+    "division_code",
+    "train_service_code"
+  ]
+}

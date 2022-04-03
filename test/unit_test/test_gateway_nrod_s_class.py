@@ -1,5 +1,6 @@
 """Unit tests for gateway/nrod_s_class.py."""
 
+import json
 import datetime
 from s_class_fixtures import sf_msg
 from gateway.nrod import s_class
@@ -20,3 +21,5 @@ class TestSClassMessage:
         assert len(msg.lsb_first) == 8
         assert isinstance(msg.msb_first, str)
         assert len(msg.msb_first) == 8
+
+        assert s_class.SClassMessage(**json.loads(msg.json())).json()

@@ -1,0 +1,157 @@
+{
+  "title": "Activation",
+  "description": "Representation of an NROD activation message.",
+  "type": "object",
+  "properties": {
+    "source_dev_id": {
+      "title": "The source device ID",
+      "type": "string"
+    },
+    "original_data_source": {
+      "title": "The original data source",
+      "type": "string"
+    },
+    "source_system_id": {
+      "title": "Source system ID",
+      "type": "string"
+    },
+    "schedule_source": {
+      "title": "The schedule source",
+      "type": "string"
+    },
+    "train_file_address": {
+      "title": "TOPS train file address, if applicable",
+      "type": "string"
+    },
+    "schedule_end_date": {
+      "title": "End date of the schedule (runs to)",
+      "maxLength": 10,
+      "minLength": 10,
+      "pattern": "[0-9]{4}-[0-9]{2}-[0-9]{2}",
+      "type": "string"
+    },
+    "train_id": {
+      "title": "TRUST ID",
+      "maxLength": 10,
+      "minLength": 10,
+      "type": "string"
+    },
+    "tp_origin_timestamp": {
+      "title": "The date the train runs",
+      "maxLength": 10,
+      "minLength": 10,
+      "pattern": "[0-9]{4}-[0-9]{2}-[0-9]{2}",
+      "type": "string"
+    },
+    "creation_timestamp": {
+      "title": "When the service was called in TRUST",
+      "type": "integer"
+    },
+    "tp_origin_stanox": {
+      "title": "The STANOX for departure of the service",
+      "maxLength": 5,
+      "type": "string"
+    },
+    "origin_dep_timestamp": {
+      "title": "Timestamp when the train departs its point of origin",
+      "type": "integer"
+    },
+    "train_service_code": {
+      "title": "The train service code",
+      "type": "string"
+    },
+    "toc_id": {
+      "title": "The TOC ID, or ZZ",
+      "maxLength": 2,
+      "minLength": 2,
+      "pattern": "[0-9A-Z]{2}",
+      "type": "string"
+    },
+    "d1266_record_number": {
+      "title": "TOPS unique ID, or 00000",
+      "type": "string"
+    },
+    "train_call_type": {
+      "title": "The activation(call) type - AUTOMATIC or MANUAL",
+      "allOf": [
+        {
+          "$ref": "#/definitions/CallType"
+        }
+      ]
+    },
+    "train_uid": {
+      "title": "Unique [sic] ID of the service",
+      "maxLength": 6,
+      "minLength": 5,
+      "pattern": "[ A-Z0-9]{5,6}",
+      "type": "string"
+    },
+    "train_call_mode": {
+      "title": "The call mode - NORMAL or OVERNIGHT",
+      "allOf": [
+        {
+          "$ref": "#/definitions/CallMode"
+        }
+      ]
+    },
+    "schedule_type": {
+      "title": "CIF Schedule type",
+      "pattern": "[CNOP]{1}",
+      "type": "string"
+    },
+    "sched_origin_stanox": {
+      "title": "Origin STANOX",
+      "maxLength": 5,
+      "type": "string"
+    },
+    "schedule_wtt_id": {
+      "title": "Headcode and speed class",
+      "maxLength": 5,
+      "minLength": 5,
+      "type": "string"
+    },
+    "schedule_start_date": {
+      "title": "Schedule start date (runs from)",
+      "maxLength": 10,
+      "minLength": 10,
+      "pattern": "[0-9]{4}-[0-9]{2}-[0-9]{2}",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schedule_source",
+    "schedule_end_date",
+    "train_id",
+    "tp_origin_timestamp",
+    "creation_timestamp",
+    "origin_dep_timestamp",
+    "train_service_code",
+    "toc_id",
+    "d1266_record_number",
+    "train_call_type",
+    "train_uid",
+    "train_call_mode",
+    "schedule_type",
+    "sched_origin_stanox",
+    "schedule_wtt_id",
+    "schedule_start_date"
+  ],
+  "definitions": {
+    "CallType": {
+      "title": "CallType",
+      "description": "Enumeration of valid call types.",
+      "enum": [
+        "AUTOMATIC",
+        "MANUAL"
+      ]
+    },
+    "CallMode": {
+      "title": "CallMode",
+      "description": "Enumeration of valid call mode.",
+      "enum": [
+        "NORMAL",
+        "OVERNIGHT"
+      ]
+    }
+  }
+}

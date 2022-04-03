@@ -1,0 +1,49 @@
+{
+  "title": "ChangeOfIdentity",
+  "description": "Representation of an NROD COI message.",
+  "type": "object",
+  "properties": {
+    "source_dev_id": {
+      "title": "The source device ID",
+      "type": "string"
+    },
+    "original_data_source": {
+      "title": "The original data source",
+      "type": "string"
+    },
+    "source_system_id": {
+      "title": "Source system ID",
+      "type": "string"
+    },
+    "current_train_id": {
+      "title": "If the TRUST ID has been changed, this is the current one",
+      "type": "string"
+    },
+    "train_file_address": {
+      "title": "TOPS train file address, if applicable",
+      "type": "string"
+    },
+    "train_service_code": {
+      "title": "The train service code",
+      "type": "string"
+    },
+    "revised_train_id": {
+      "title": "The new TRUST ID",
+      "type": "string"
+    },
+    "train_id": {
+      "title": "The TRUST ID at activation time",
+      "type": "string"
+    },
+    "event_timestamp": {
+      "title": "The timestamp of the COI transaction",
+      "type": "string"
+    }
+  },
+  "required": [
+    "source_dev_id",
+    "original_data_source",
+    "source_system_id",
+    "train_service_code"
+  ]
+}

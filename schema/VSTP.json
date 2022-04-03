@@ -1,0 +1,398 @@
+{
+  "title": "VSTPSchedule",
+  "description": "Representation of a VSTP Schedule.",
+  "type": "object",
+  "properties": {
+    "message_details": {
+      "title": "Details of the message",
+      "allOf": [
+        {
+          "$ref": "#/definitions/MessageDetails"
+        }
+      ]
+    },
+    "basic_schedule": {
+      "title": "The basic schedule (BS) record",
+      "allOf": [
+        {
+          "$ref": "#/definitions/BasicSchedule"
+        }
+      ]
+    },
+    "basic_schedule_extra": {
+      "title": "The BX record",
+      "allOf": [
+        {
+          "$ref": "#/definitions/BasicScheduleExtra"
+        }
+      ]
+    },
+    "lo_record": {
+      "title": "The LO Record",
+      "allOf": [
+        {
+          "$ref": "#/definitions/LocationOrigin"
+        }
+      ]
+    },
+    "li_records": {
+      "title": "LI records",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/LocationIntermediate"
+      }
+    },
+    "lt_record": {
+      "title": "The LT Record.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/LocationTerminating"
+        }
+      ]
+    }
+  },
+  "required": [
+    "message_details",
+    "basic_schedule"
+  ],
+  "definitions": {
+    "MessageDetails": {
+      "title": "MessageDetails",
+      "description": "Representation of VSTP message details.",
+      "type": "object",
+      "properties": {
+        "organisation": {
+          "title": "The sender organisation",
+          "type": "string"
+        },
+        "application": {
+          "title": "The sending application",
+          "type": "string"
+        },
+        "component": {
+          "title": "The component used to create the schedule",
+          "type": "string"
+        }
+      },
+      "required": [
+        "organisation",
+        "application",
+        "component"
+      ]
+    },
+    "BasicSchedule": {
+      "title": "BasicSchedule",
+      "description": "Representation of a VSTP BS record.",
+      "type": "object",
+      "properties": {
+        "transaction_type": {
+          "title": "The type of transaction, usually CREATE",
+          "type": "string"
+        },
+        "CIF_train_uid": {
+          "title": "The UID of the service",
+          "maxLength": 6,
+          "minLength": 5,
+          "type": "string"
+        },
+        "schedule_start_date": {
+          "title": "Schedule start date",
+          "pattern": "[0-9]{4}-[0-9]{2}-[0-9]{2}",
+          "type": "string"
+        },
+        "schedule_end_date": {
+          "title": "Schedule end date",
+          "pattern": "[0-9]{4}-[0-9]{2}-[0-9]{2}",
+          "type": "string"
+        },
+        "schedule_days_runs": {
+          "title": "Schedule days run",
+          "pattern": "[10]{7}",
+          "type": "string"
+        },
+        "CIF_bank_holiday_running": {
+          "title": "CIF Bank holiday running?",
+          "type": "string"
+        },
+        "train_status": {
+          "title": "The status code of the service",
+          "type": "string"
+        },
+        "CIF_train_category": {
+          "title": "Service category code",
+          "type": "string"
+        },
+        "signalling_id": {
+          "title": "The headcode of the service",
+          "type": "string"
+        },
+        "CIF_course_indicator": {
+          "title": "The course indicator",
+          "type": "string"
+        },
+        "CIF_train_service_code": {
+          "title": "The train service code",
+          "type": "string"
+        },
+        "portion_id": {
+          "title": "Portion ID BUSSEC",
+          "default": "X",
+          "type": "string"
+        },
+        "CIF_power_type": {
+          "title": "The service planned power type",
+          "type": "string"
+        },
+        "CIF_timing_load": {
+          "title": "The service timing load",
+          "type": "string"
+        },
+        "CIF_speed": {
+          "title": "The planned service speed value",
+          "type": "string"
+        },
+        "CIF_operating_characteristics": {
+          "title": "Operating characteristics for the service.",
+          "type": "string"
+        },
+        "CIF_train_class": {
+          "title": "Planned accomodation code",
+          "type": "string"
+        },
+        "CIF_sleepers": {
+          "title": "Sleeper service code",
+          "type": "string"
+        },
+        "CIF_reservations": {
+          "title": "Service reservations code",
+          "type": "string"
+        },
+        "CIF_connection_indicator": {
+          "title": "The service connection indicator",
+          "type": "string"
+        },
+        "CIF_catering_code": {
+          "title": "Catering code",
+          "type": "string"
+        },
+        "CIF_service_branding": {
+          "title": "Service branding code",
+          "type": "string"
+        },
+        "CIF_stp_indicator": {
+          "title": "The CIF stp indicator the for the schedule",
+          "pattern": "[NCOP]{1}",
+          "type": "string"
+        }
+      },
+      "required": [
+        "transaction_type",
+        "CIF_train_uid",
+        "schedule_start_date",
+        "schedule_end_date",
+        "schedule_days_runs",
+        "CIF_stp_indicator"
+      ]
+    },
+    "BasicScheduleExtra": {
+      "title": "BasicScheduleExtra",
+      "description": "Representation of a VSTP BX record.",
+      "type": "object",
+      "properties": {
+        "traction_class": {
+          "title": "Traction Class (not used)",
+          "type": "string"
+        },
+        "uic_code": {
+          "title": "UIC code",
+          "type": "string"
+        },
+        "atoc_code": {
+          "title": "ATOC code",
+          "type": "string"
+        },
+        "applicable_timetable": {
+          "title": "Applicable for delay monitoring",
+          "type": "string"
+        }
+      }
+    },
+    "LocationOrigin": {
+      "title": "LocationOrigin",
+      "description": "Representation of an LO record.",
+      "type": "object",
+      "properties": {
+        "scheduled_arrival_time": {
+          "title": "Working Time Arrival",
+          "type": "string"
+        },
+        "scheduled_pass_time": {
+          "title": "Working Time Pass",
+          "type": "string"
+        },
+        "scheduled_departure_time": {
+          "title": "Working Time Departure",
+          "type": "string"
+        },
+        "public_arrival_time": {
+          "title": "Public Time Arrival",
+          "type": "string"
+        },
+        "public_departure_time": {
+          "title": "Public Time Departure",
+          "type": "string"
+        },
+        "CIF_path": {
+          "title": "Path (IN)",
+          "type": "string"
+        },
+        "CIF_platform": {
+          "title": "Platform",
+          "type": "string"
+        },
+        "CIF_line": {
+          "title": "Line (OUT)",
+          "type": "string"
+        },
+        "CIF_activity": {
+          "title": "Activity code",
+          "type": "string"
+        },
+        "CIF_engineering_allowance": {
+          "title": "Engineering allowance",
+          "type": "string"
+        },
+        "CIF_pathing_allowance": {
+          "title": "Pathing allowance",
+          "type": "string"
+        },
+        "CIF_performance_allowance": {
+          "title": "Performance allowance",
+          "type": "string"
+        },
+        "tiploc_id": {
+          "title": "TIPLOC",
+          "type": "string"
+        }
+      }
+    },
+    "LocationIntermediate": {
+      "title": "LocationIntermediate",
+      "description": "Representation of an LI record.",
+      "type": "object",
+      "properties": {
+        "scheduled_arrival_time": {
+          "title": "Working Time Arrival",
+          "type": "string"
+        },
+        "scheduled_pass_time": {
+          "title": "Working Time Pass",
+          "type": "string"
+        },
+        "scheduled_departure_time": {
+          "title": "Working Time Departure",
+          "type": "string"
+        },
+        "public_arrival_time": {
+          "title": "Public Time Arrival",
+          "type": "string"
+        },
+        "public_departure_time": {
+          "title": "Public Time Departure",
+          "type": "string"
+        },
+        "CIF_path": {
+          "title": "Path (IN)",
+          "type": "string"
+        },
+        "CIF_platform": {
+          "title": "Platform",
+          "type": "string"
+        },
+        "CIF_line": {
+          "title": "Line (OUT)",
+          "type": "string"
+        },
+        "CIF_activity": {
+          "title": "Activity code",
+          "type": "string"
+        },
+        "CIF_engineering_allowance": {
+          "title": "Engineering allowance",
+          "type": "string"
+        },
+        "CIF_pathing_allowance": {
+          "title": "Pathing allowance",
+          "type": "string"
+        },
+        "CIF_performance_allowance": {
+          "title": "Performance allowance",
+          "type": "string"
+        },
+        "tiploc_id": {
+          "title": "TIPLOC",
+          "type": "string"
+        }
+      }
+    },
+    "LocationTerminating": {
+      "title": "LocationTerminating",
+      "description": "Representation of an LT record.",
+      "type": "object",
+      "properties": {
+        "scheduled_arrival_time": {
+          "title": "Working Time Arrival",
+          "type": "string"
+        },
+        "scheduled_pass_time": {
+          "title": "Working Time Pass",
+          "type": "string"
+        },
+        "scheduled_departure_time": {
+          "title": "Working Time Departure",
+          "type": "string"
+        },
+        "public_arrival_time": {
+          "title": "Public Time Arrival",
+          "type": "string"
+        },
+        "public_departure_time": {
+          "title": "Public Time Departure",
+          "type": "string"
+        },
+        "CIF_path": {
+          "title": "Path (IN)",
+          "type": "string"
+        },
+        "CIF_platform": {
+          "title": "Platform",
+          "type": "string"
+        },
+        "CIF_line": {
+          "title": "Line (OUT)",
+          "type": "string"
+        },
+        "CIF_activity": {
+          "title": "Activity code",
+          "type": "string"
+        },
+        "CIF_engineering_allowance": {
+          "title": "Engineering allowance",
+          "type": "string"
+        },
+        "CIF_pathing_allowance": {
+          "title": "Pathing allowance",
+          "type": "string"
+        },
+        "CIF_performance_allowance": {
+          "title": "Performance allowance",
+          "type": "string"
+        },
+        "tiploc_id": {
+          "title": "TIPLOC",
+          "type": "string"
+        }
+      }
+    }
+  }
+}

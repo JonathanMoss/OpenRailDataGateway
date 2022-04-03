@@ -18,6 +18,10 @@ class MsgType(Enum):
 class CClassMessage(pydantic.BaseModel):
     """Representation of a c-class message."""
 
+    class Config:
+        """pydantic configuration."""
+        allow_population_by_field_name = True
+
     time: int = pydantic.Field(
         title='UNIX timestamp in milliseconds since the UNIX epoch'
     )

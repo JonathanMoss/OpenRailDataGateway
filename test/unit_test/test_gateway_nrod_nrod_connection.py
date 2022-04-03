@@ -1,5 +1,6 @@
 """Unit tests for gateway_nrod_nrod_connection.py."""
 
+import json
 import datetime
 import pytest
 import pydantic
@@ -12,7 +13,8 @@ class TestMessageHeader:
         with pytest.raises(pydantic.ValidationError):
             nc.SClassMessage()
 
-        nc.MessageHeader(**msg_header)
+        res = nc.MessageHeader(**msg_header).json()
+        assert nc.MessageHeader(**json.loads(res)).json()
 
 
 class TestMessage:
@@ -25,3 +27,4 @@ class TestMessage:
         assert msg.msg_id
         assert msg.timestamp
         assert isinstance(msg.msg_time, datetime.datetime)
+        assert nc.Message(**json.loads(msg.json())).json()
