@@ -116,6 +116,7 @@ export RMQ_V_HOST="$(pass rabbitmq/v_host)"
 export GRAFANA_V_HOST="$(pass grafana/v_host)"
 export RMQ_HOST="rabbitmq"
 export RMQ_PORT="5672"
+export CIF_FOLDER="~/cif"
 ```
 
 ### Step 6 - clone the repo
