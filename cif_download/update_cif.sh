@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd ~/cif
+cd $CIF_FOLDER
 URL='https://datafeeds.networkrail.co.uk/ntrod/CifFileAuthenticate'
 
 function get_ref {
@@ -12,7 +12,7 @@ function get_date {
 }
 
 function full_cif_date {
-  echo $(find ~/cif/*.CIF -type f -printf '%T+ %p\n' | sort | head -n 1 | grep -Eo "[0-9]{4}-[0-9]{2}-[0-9]{2}")
+  echo $(find $CIF_FOLDER/*.CIF -type f -printf '%T+ %p\n' | sort | head -n 1 | grep -Eo "[0-9]{4}-[0-9]{2}-[0-9]{2}")
 }
 
 function file_count {
@@ -28,7 +28,6 @@ fi
 
 # Get the Full CIF date
 FULL_DATE=$(full_cif_date)
-echo $FULL_DATE
 
 # Download the updates
 DAYS=("sat" "sun" "mon" "tue" "wed" "thu" "fri")
