@@ -1,7 +1,6 @@
 #!/bin/bash
 
 cd ~/cif
-rm -rf *
 URL='https://datafeeds.networkrail.co.uk/ntrod/CifFileAuthenticate'
 
 function get_ref {
@@ -12,22 +11,28 @@ function get_date {
   echo $(head -n 1 $1 | awk '{print $1}' | grep -Eo 'PD[0-9]{6}' | sed 's/PD//')
 }
 
-# Download the latest FULL CIF & un-gzip
-FILE="CIF_ALL_FULL_DAILY.CIF"
-curl -L -u $NROD_USER:$NROD_PASS -o $FILE.gz "$URL?type=CIF_ALL_FULL_DAILY&day=toc-full.CIF.gz"
-gzip -d $FILE.gz
+function full_cif_date {
+  echo $(find ~/cif/*.CIF -type f -printf '%T+ %p\n' | sort | head -n 1 | grep -Eo "[0-9]{4}-[0-9]{2}-[0-9]{2}")
+}
 
-# Get the file reference
-REF=$(get_ref $FILE)
+function file_count {
+  echo $(ls ~/cif | wc -l)
+}
 
-# Get the file date
-FULL_DATE=$(get_date $FILE)
+# Check to make sure there are files in the directory
+if [ $(file_count) = 0 ];
+then
+  echo "No FULL CIF can be found, closing..."
+  exit 1
+fi
 
-# Rename the full CIF and adjust the file date
-mv $FILE "$REF.CIF"
-touch "$REF.CIF" -d $FULL_DATE
+# Get the Full CIF date
+FULL_DATE=$(full_cif_date)
+echo $FULL_DATE
 
-DAYS=("sat" "sun" "mon" "tue" "wed" "thu")
+# Download the updates
+DAYS=("sat" "sun" "mon" "tue" "wed" "thu" "fri")
+
 for DAY in ${DAYS[@]}; do
   FILE="toc-update-$DAY"
   curl -L -u $NROD_USER:$NROD_PASS -o $FILE.gz "$URL?type=CIF_ALL_UPDATE_DAILY&day=$FILE.CIF.gz"
