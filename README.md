@@ -47,12 +47,14 @@ RMQ_V_HOST
 GRAFANA_V_HOST
 RMQ_HOST
 RMQ_PORT
+CIF_FOLDER
 ```
 **NROD_USER** and **NROD_PASS** need to be set to your NROD access credentials.
 
 The following variables **must** be set thus:
 - **RMQ_HOST**="rabbitmq"
 - **RMQ_PORT**="5672"
+- **CIF_FOLDER**="<FOLDER WHERE YOU WANT THE CIF'S>"
 
 **RMQ_V_HOST** and **GRAFANA_V_HOST** need to be set to the FQDN from where the front end will be accessed.
 
