@@ -124,7 +124,10 @@ class Message(pydantic.BaseModel):
         """Convert body to list from json."""
         if isinstance(value, list):
             return value
-        return json.loads(value)
+        ret_val = json.loads(value)
+        if not isinstance(ret_val, list):
+            ret_val = [ret_val]
+        return ret_val
 
     @property
     def msg_id(self) -> str:
