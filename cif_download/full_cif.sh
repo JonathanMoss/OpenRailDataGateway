@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -u
+
 cd $CIF_FOLDER
 rm -rf *
 URL='https://datafeeds.networkrail.co.uk/ntrod/CifFileAuthenticate'

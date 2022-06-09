@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -u
+
 cd $CIF_FOLDER
 URL='https://datafeeds.networkrail.co.uk/ntrod/CifFileAuthenticate'
 
@@ -16,7 +18,7 @@ function full_cif_date {
 }
 
 function file_count {
-  echo $(ls ~/cif | wc -l)
+  echo $(ls $CIF_FOLDER | wc -l)
 }
 
 # Check to make sure there are files in the directory
