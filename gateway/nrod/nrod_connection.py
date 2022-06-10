@@ -372,7 +372,7 @@ class Listener(stomp.ConnectionListener, pydantic.BaseModel):
         dest = msg.headers.destination
         if dest == VSTP_TOPIC:
             ALL_MESSAGE_C.labels(msg='vstp').inc()
-            self.process_vstp(msg.body)
+            self.process_vstp(msg.body[0])
             return
 
         for element in msg.body:
