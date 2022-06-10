@@ -232,7 +232,7 @@ We run the scripts from a cron job, e.g.:
 0 1 2 * * . "${HOME}"/.profile && cd ~/OpenRailDataGateway && ./cif_download/full_cif.sh
 ```
 
-This will download the latest full CIF on 2nd each month, and the incremental (update) cif any other day.
+This will download the latest full CIF on 2nd each month, and the incremental (update) CIF any other day.
 
 #### SFTP
 
