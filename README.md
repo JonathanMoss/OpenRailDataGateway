@@ -48,6 +48,8 @@ GRAFANA_V_HOST
 RMQ_HOST
 RMQ_PORT
 CIF_FOLDER
+SFTP_USER
+SFTP_PASS
 ```
 **NROD_USER** and **NROD_PASS** need to be set to your NROD access credentials.
 
@@ -96,6 +98,12 @@ pass insert nrod/user
 pass insert nrod/pass
 ```
 
+SFTP Credentials:
+```bash
+pass insert sftp/user
+pass generate -n sftp/pass 15
+```
+
 Virtual Hosts:
 ```bash
 pass insert rabbitmq/v_host
@@ -116,7 +124,9 @@ export RMQ_V_HOST="$(pass rabbitmq/v_host)"
 export GRAFANA_V_HOST="$(pass grafana/v_host)"
 export RMQ_HOST="rabbitmq"
 export RMQ_PORT="5672"
-export CIF_FOLDER="~/cif"
+export CIF_FOLDER="~/nrod_cif"
+export SFTP_USER="$(pass sftp/user)"
+export SFTP_PASS="$(pass sftp/pass)"
 ```
 
 ### Step 6 - clone the repo
@@ -180,7 +190,59 @@ gateway/nrod/train_movement.py
 gateway/nrod/vstp.py
 ```
 
-# TODO
+### CIF Download & Repository
+
+There are 2 scripts contained within ```cif_download```:
+* ```full_cif.sh```
+* ```update_cif.sh```
+
+The full CIF script is aimed at initialising the cif repository and the update script is provided to download each incremental update and is intended to be called daily.
+
+The aim of the gateway functionality in respect of the CIF is to maintain a single full CIF and multiple update CIF's to enable a consuming service to maintain a representative train service database. A simple SFTP server is provisioned for the purpose of downloading the CIF files from the gateway.
+
+#### Environment variables
+
+CIF downloading and SFTP server require the following environment variables to be set, as described above:
+
+```bash
+CIF_FOLDER
+SFTP_USER
+SFTP_PASS
+NROD_USER
+NROD_PASS
+```
+
+#### CIF Folder
+
+When setting up, the location detailed in ```CIF_FOLDER``` needs to exist on the host, and stored as the environment variable, e.g:
+```bash
+mkdir ~/nrod_cif
+export CIF_FOLDER=~/nrod_cif
+```
+
+#### Running the scripts
+
+We run the scripts from a cron job, e.g.:
+
+```bash
+# Download the incremental (update) CIF
+0 1 1, 3-31 * * . "${HOME}"/.profile && cd ~/OpenRailDataGateway && ./cif_download/update_cif.sh
+
+# Download the full CIF
+0 1 2 * * . "${HOME}"/.profile && cd ~/OpenRailDataGateway && ./cif_download/full_cif.sh
+```
+
+This will download the latest full CIF on 2nd each month, and the incremental (update) cif any other day.
+
+#### SFTP
+
+The CIF files can be downloaded using SFTP on port 2222 using the credentials set in ```SFTP_USER``` and ```SFTP_PASS```, e.g:
+
+```bash
+sftp -P 2222 ${SFTP_USER}@host
+```
+
+### TODO
 
 This is a work in progress; we are currently working on the following:
 

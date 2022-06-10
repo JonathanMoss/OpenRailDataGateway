@@ -87,6 +87,14 @@ services:
       - /var/lib/docker/containers:/var/lib/docker/containers
       - ./promtail/docker-config.yml:/etc/promtail/docker-config.yml
     command: -config.file=/etc/promtail/docker-config.yml
+  atmoz-sftp:
+    container_name: sftp
+    image: atmoz/sftp
+    volumes:
+      - ${CIF_FOLDER}:/home/${SFTP_USER}/cif
+    ports:
+      - "2222:22"
+    command: ${SFTP_USER}:${SFTP_PASS}:1001
   grafana-dashboards:
     image: alpine:3.10
     depends_on:
