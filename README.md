@@ -124,7 +124,7 @@ export RMQ_V_HOST="$(pass rabbitmq/v_host)"
 export GRAFANA_V_HOST="$(pass grafana/v_host)"
 export RMQ_HOST="rabbitmq"
 export RMQ_PORT="5672"
-export CIF_FOLDER="~/nrod_cif"
+export CIF_FOLDER=~/nrod_cif/
 export SFTP_USER="$(pass sftp/user)"
 export SFTP_PASS="$(pass sftp/pass)"
 ```
