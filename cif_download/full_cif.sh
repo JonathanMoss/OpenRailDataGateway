@@ -17,7 +17,13 @@ function get_date {
 # Download the latest FULL CIF & un-gzip
 FILE="CIF_ALL_FULL_DAILY.CIF"
 curl -L -u $NROD_USER:$NROD_PASS -o $FILE.gz "$URL?type=CIF_ALL_FULL_DAILY&day=toc-full.CIF.gz"
-gzip -d $FILE.gz
+
+if gzip -t $FILE.gz; then
+  gzip -d $FILE.gz
+else
+  rm $FILE.gz
+  exit 1
+fi
 
 # Get the file reference
 REF=$(get_ref $FILE)
@@ -33,7 +39,13 @@ DAYS=("sat" "sun" "mon" "tue" "wed" "thu")
 for DAY in ${DAYS[@]}; do
   FILE="toc-update-$DAY"
   curl -L -u $NROD_USER:$NROD_PASS -o $FILE.gz "$URL?type=CIF_ALL_UPDATE_DAILY&day=$FILE.CIF.gz"
-  gzip -d $FILE.gz
+  
+  if gzip -t $FILE.gz; then
+    gzip -d $FILE.gz
+  else
+    rm $FILE.gz
+    continue
+  fi
 
   # Get the file reference
   REF=$(get_ref $FILE)
