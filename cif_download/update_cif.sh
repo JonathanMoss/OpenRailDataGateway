@@ -37,7 +37,12 @@ DAYS=("sat" "sun" "mon" "tue" "wed" "thu" "fri")
 for DAY in ${DAYS[@]}; do
   FILE="toc-update-$DAY"
   curl -L -u $NROD_USER:$NROD_PASS -o $FILE.gz "$URL?type=CIF_ALL_UPDATE_DAILY&day=$FILE.CIF.gz"
-  gzip -d $FILE.gz
+  if gzip -t $FILE.gz; then
+    gzip -d $FILE.gz
+  else
+    rm $FILE.gz
+    exit 1
+  fi
 
   # Get the file reference
   REF=$(get_ref $FILE)
