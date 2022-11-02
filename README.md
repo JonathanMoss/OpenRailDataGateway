@@ -2,6 +2,9 @@
 Rail open data gateway - deploys a connection to all NROD subscription services
 and places messages on a RabbitMQ Broker for consumption by other services.
 
+Also includes the following NRE feeds:
+- National Rail Enquiries - Darwin Web Service - Staff Live Departure Board
+
 ### Step 1 - identify and prepare the host
 As a containerised application, the application stack can be ran in numerous environments but this readme assumes running on a GNU/Linux system of some description.
 
@@ -12,6 +15,7 @@ We currently run the application stack on a Ubuntu 20.04 LTS small business serv
 - docker-compose
 - pass (Standard Unix Password Manager - optional)
 - credentials for Network Rail open data feeds (NROD)
+- access token for Live Departure Boards feed (NRE - Darwin Web Service (Staff))
 
 ### Step 4 - NROD permissions
 The services that connect to NROD assume the following NROD subscriptions; users can set match these subscriptions by logging on to ```datafeeds.networkrail.co.uk``` and navigating to ```My Feeds``` and setting your subscription to:
@@ -50,8 +54,15 @@ RMQ_PORT
 CIF_FOLDER
 SFTP_USER
 SFTP_PASS
+SLDB_TOKEN
+SLDB_WSDL
+SLDB_FREQ
 ```
 **NROD_USER** and **NROD_PASS** need to be set to your NROD access credentials.
+**SLDB_TOKEN** needs to be set to your NRE access token.
+**SLDB_FREQ** is the polling frequency for live departure boards (in seconds).
+**SLDB_WSDL** is the endpoint URL provided at registration/within documentation:
+  - https://lite.realtime.nationalrail.co.uk/OpenLDBSVWS/wsdl.aspx?ver=2021-11-01
 
 The following variables **must** be set thus:
 - **RMQ_HOST**="rabbitmq"
@@ -110,6 +121,11 @@ pass insert rabbitmq/v_host
 pass insert grafana/v_host
 ```
 
+NRE - Live Departure Boards (Staff):
+pass insert sldb/token
+pass insert sldb_freq
+pass insert sldb/wsdl
+
 Then export to environment:
 ```bash
 export RMQ_ADMIN_USER="$(pass rabbitmq/admin/user)"
@@ -127,6 +143,9 @@ export RMQ_PORT="5672"
 export CIF_FOLDER=~/nrod_cif/
 export SFTP_USER="$(pass sftp/user)"
 export SFTP_PASS="$(pass sftp/pass)"
+export SLDB_TOKEN="$(sldb/token)"
+export SLDB_WSDL="$(sldb/wsdl)"
+export SLDB_FREQ="$(sldb/freq)"
 ```
 
 ### Step 6 - clone the repo
