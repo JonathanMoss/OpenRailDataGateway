@@ -4,7 +4,7 @@ set -u
 
 cd $CIF_FOLDER
 rm -rf *
-URL='https://datafeeds.networkrail.co.uk/ntrod/CifFileAuthenticate'
+URL='https://publicdatafeeds.networkrail.co.uk/ntrod/CifFileAuthenticate'
 
 function get_ref {
   echo $(head -n 1 $1 | awk '{print $1}' | cut -d. -f3)
