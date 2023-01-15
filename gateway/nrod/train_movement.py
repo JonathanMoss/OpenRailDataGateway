@@ -494,12 +494,13 @@ class Movement(pydantic.BaseModel):
 
     source_id: str = pydantic.Field(
         title='The source device ID',
-        alias='source_dev_id'
+        alias='source_system_id'
     )
 
     data_source: str = pydantic.Field(
         title='The original data source',
-        alias='original_data_source'
+        alias='original_data_source',
+        default='TRUST'
     )
 
     source_system: str = pydantic.Field(
@@ -609,7 +610,8 @@ class Movement(pydantic.BaseModel):
     )
 
     auto_expected: Union[str, bool] = pydantic.Field(
-        title='Set to "true" if an automatic report is expected'
+        title='Set to "true" if an automatic report is expected',
+        default=False
     )
 
     direction_ind: Union[str, None] = pydantic.Field(
