@@ -3,7 +3,8 @@
 set -u
 
 cd $CIF_FOLDER
-rm -rf *
+rm -rf *.CIF
+rm TOTALS
 URL='https://publicdatafeeds.networkrail.co.uk/ntrod/CifFileAuthenticate'
 
 function get_ref {
@@ -65,3 +66,7 @@ for DAY in ${DAYS[@]}; do
   fi
 
 done
+
+# Amalgamate CIF
+pcregrep -Mh "^BS\X*?(?=^BS|^ZZ)" *.CIF > AMALGAMATED.CIF
+pcregrep -Mc "^BS\X*?(?=^BS|^ZZ)" *.CIF > TOTALS
