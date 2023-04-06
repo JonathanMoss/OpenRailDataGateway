@@ -2,13 +2,17 @@
 
 #pylint: disable=no-member, too-few-public-methods, catching-non-exception
 
+import json
 import os
 import socket
 import time
 import zlib
+import pprint
 
-import stomp
 import pydantic
+import stomp
+import xmltodict
+
 
 DARWIN_CON_VARS = {
     'darwin_user': os.getenv('DARWIN_USER'),
@@ -17,6 +21,62 @@ DARWIN_CON_VARS = {
     'darwin_status': os.getenv('DARWIN_STATUS'),
     'darwin_host': os.getenv('DARWIN_HOST'),
     'darwin_port': os.getenv('DARWIN_PORT')
+}
+
+MESSAGE_PROC = {
+    'OW': 'process_station_messages',
+    'NO': 'process_notifications'
+}
+
+# MESSAGE_PROC = {
+#     'LO': 'process_loading',
+#     'TO': 'process_train_order',
+#     'AS': 'process_associations',
+#     'SC': 'process_schedule',
+#     'SF': 'process_formations',
+#     'TS': 'process_train_status',
+#     'OW': 'process_station_messages',
+#     'NO': 'process_notifications'
+# }
+
+MESSAGE_FILTERS = {
+    'LO': [
+        ('@', ''),
+        ('ns6:', ''),
+        ('#text', 'value')
+    ],
+    'TO': [
+        ('@', ''),
+        ('ns9:', ''),
+        ('#text', 'value')
+    ],
+    'AS': [
+        ('@', ''),
+        ('ns3:', ''),
+        ('#text', 'value')
+    ],
+    'SC': [
+        ('@', ''),
+        ('ns2:', '')
+    ],
+    'SF': [
+        ('@', ''),
+        ('ns4:', ''),
+    ],
+    'TS': [
+        ('@', ''),
+        ('ns5:', ''),
+        ('#text', 'value')
+    ],
+    'OW': [
+        ('@', ''),
+        ('ns7:', ''),
+        ('#text', 'msg')
+    ],
+    'NO': [
+        ('@', ''),
+        ('ns8:', ''),
+    ]
 }
 
 if None in DARWIN_CON_VARS.values():
@@ -33,6 +93,86 @@ class Listener(stomp.ConnectionListener, pydantic.BaseModel):
         title='The STOMP connection'
     )
 
+    @staticmethod
+    @pydantic.validate_arguments
+    def filter_raw(dump: str, filters: list) -> str:
+        """Filter the string based on the filters passed"""
+        for filt in filters:
+            dump = dump.replace(*filt)
+        return dump
+
+    @classmethod
+    @pydantic.validate_arguments
+    def format_darwin_message(cls, message: bytes, filters: list) -> dict:
+        """format and filter the darwin message"""
+        dump = json.dumps(xmltodict.parse(message)['Pport']['uR'])
+        dump = cls.filter_raw(dump, filters)
+        return json.loads(dump)
+
+    @classmethod
+    @pydantic.validate_arguments
+    def process_loading(cls, message: bytes, filters: list):
+        """Process the LO message from Darwin"""       
+
+        msg = cls.format_darwin_message(message, filters)
+        pprint.pprint(msg, indent=1)
+
+    @classmethod
+    @pydantic.validate_arguments
+    def process_formations(cls, message: bytes, filters: list):
+        """Process the SF message from Darwin"""       
+
+        msg = cls.format_darwin_message(message, filters)
+        pprint.pprint(msg, indent=1)
+
+    @classmethod
+    @pydantic.validate_arguments
+    def process_associations(cls, message: bytes, filters: list):
+        """Process the AS message from Darwin"""
+
+        msg = cls.format_darwin_message(message, filters)
+        pprint.pprint(msg, indent=1)
+
+    @classmethod
+    @pydantic.validate_arguments
+    def process_schedule(cls, message: bytes, filters: list):
+        """Process the SC message from Darwin"""
+
+        msg = cls.format_darwin_message(message, filters)
+        pprint.pprint(msg, indent=1)
+
+    @classmethod
+    @pydantic.validate_arguments
+    def process_train_order(cls, message: bytes, filters: list):
+        """Process the TO message from Darwin"""
+
+        msg = cls.format_darwin_message(message, filters)
+        pprint.pprint(msg, indent=1)
+
+    @classmethod
+    @pydantic.validate_arguments
+    def process_train_status(cls, message: bytes, filters: list):
+        """Process the TS message from Darwin"""
+
+        msg = cls.format_darwin_message(message, filters)
+        pprint.pprint(msg, indent=1)
+
+    @classmethod
+    @pydantic.validate_arguments
+    def process_station_messages(cls, message: bytes, filters: list):
+        """Process the OW message from Darwin"""
+
+        msg = cls.format_darwin_message(message, filters)
+        pprint.pprint(msg, indent=1)
+
+    @classmethod
+    @pydantic.validate_arguments
+    def process_notifications(cls, message: bytes, filters: list):
+        """Process the NO message from Darwin"""
+
+        msg = cls.format_darwin_message(message, filters)
+        pprint.pprint(msg, indent=1)
+
     @pydantic.validate_arguments(config={'arbitrary_types_allowed': True})
     def on_error(self, frame: stomp.utils.Frame) -> None:
         """STOMP Error Frame Received."""
@@ -43,10 +183,18 @@ class Listener(stomp.ConnectionListener, pydantic.BaseModel):
     @pydantic.validate_arguments(config={'arbitrary_types_allowed': True})
     def on_message(self, frame: stomp.utils.Frame) -> None:
         """Called when a message is received from the broker."""
-        print(frame.headers)
-        print()
-        print(zlib.decompress(frame.body, zlib.MAX_WBITS|32))
-        print()
+
+        # decompress the message body & convert to dict
+        msg = zlib.decompress(frame.body, zlib.MAX_WBITS|32)
+
+        # Check for a valid handler
+        func = MESSAGE_PROC.get(frame.headers['MessageType'], None)
+        if not func:
+            return
+
+        # Send message to the handler
+        func = getattr(self, func)
+        func(msg, MESSAGE_FILTERS.get(frame.headers['MessageType'], []))
 
     def on_heartbeat_timeout(self):
         """Called when a STOMP heartbeat is not RX at the expected interval."""
@@ -61,7 +209,6 @@ class Listener(stomp.ConnectionListener, pydantic.BaseModel):
         """Called when a STOMP Connection is made with the server."""
         print('STOMP Connection made')
         print(frame.headers)
-        print(frame.body)
 
     def on_connecting(self, host_and_port: tuple) -> None:
         """Called when a TCP/IP connection is made to the server."""

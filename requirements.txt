@@ -17,3 +17,4 @@ six==1.16.0
 stomp.py==8.0.0
 tomli==2.0.1
 typing-extensions==4.1.1
+xmltodict==0.13.0
