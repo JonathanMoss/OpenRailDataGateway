@@ -62,7 +62,7 @@ RMQ = {
 }
 
 ALL_MESSAGE_L = Histogram(
-    'inbound_message_latency',
+    'darwin_inbound_message_latency',
     'Inbound DARWIN message latency')
 
 MESSAGE_FILTERS = {
@@ -261,7 +261,7 @@ class DarwinConnection(pydantic.BaseModel):
             )
             self.conn.set_listener('', Listener(conn=self.conn))
         except stomp.exception as err:
-            LOG.logger.error(f'Unable to define STOMP TCP/IP Connection: {err}')
+            LOG.logger.error('Unable to define STOMP TCP/IP Connection: %s', err)
             sys.exit(1)
 
     def connect(self) -> None:
@@ -277,7 +277,7 @@ class DarwinConnection(pydantic.BaseModel):
             )
 
         except stomp.exception as err:
-            LOG.logger.error(f'Unable to create STOMP Connection: {err}')
+            LOG.logger.error('Unable to create STOMP Connection: %s', err)
             sys.exit(1)
         else:
             LOG.logger.error('Waiting for STOMP Connection to return...')
@@ -303,7 +303,7 @@ class DarwinConnection(pydantic.BaseModel):
                 headers={'activemq.subscriptionName': f'{self.darwin_topic}-{self.client_id}'}
             )
         except stomp.exception as err:
-            LOG.logger.error(f'Unable to subscribe to {self.darwin_topic}: {err}')
+            LOG.logger.error('Unable to subscribe to %s: %s', self.darwin_topic, err)
             sys.exit(1)
 
     def connect_and_subscribe(self) -> None:

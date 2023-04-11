@@ -5,4 +5,4 @@ scrape_configs:
 - job_name: gateway
   honor_labels: true
   static_configs:
-  - targets: ['nrod:8000', 'rabbitmq:15692']
+  - targets: ['nrod:8000', 'rabbitmq:15692', 'darwin:8000']
