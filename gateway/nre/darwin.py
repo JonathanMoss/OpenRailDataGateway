@@ -2,20 +2,22 @@
 
 #pylint: disable=no-self-use, no-member, too-few-public-methods, catching-non-exception, import-error, wrong-import-position
 
-from datetime import datetime
-import json
 import inspect
+import json
 import os
+import signal
 import socket
+import sys
 import time
 import zlib
-import sys
+
+from datetime import datetime
+from functools import partial
 
 import pydantic
 import stomp
 import xmltodict
-
-from prometheus_client import start_http_server, Counter, Histogram
+from prometheus_client import Counter, Histogram, start_http_server
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 PARENT_DIR = os.path.dirname(CURRENT_DIR)
@@ -316,7 +318,28 @@ class DarwinConnection(pydantic.BaseModel):
 
         self.conn.disconnect()
 
+class SignalHandler:
+    """Handle OS/DOCKER SIGTERM/SIGKILL"""
+
+    @classmethod
+    def handler(cls, obj: DarwinConnection) -> None:
+        """Handle the signal, gracefully close connections, then exit"""
+
+        LOG.logger.error('SIGTERM received, closing connections...')
+
+        # Disconnect from DARWIN
+        obj.conn.disconnect()
+        LOG.logger.error('DARWIN connection closed')
+
+        # Disconnect from rabbitMQ
+        for msg, conn in RMQ.items():
+            conn.close_connection(conn)
+            LOG.logger.error('RMQ Connection for %s closed', msg)
+
+        sys.exit(0)
+
 if __name__ == "__main__":
     start_http_server(8000)
     DARWIN = DarwinConnection()
+    signal.signal(signal.SIGTERM, partial(SignalHandler.handler, DARWIN))
     DARWIN.connect_and_subscribe()
