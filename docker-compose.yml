@@ -23,6 +23,20 @@ services:
       - "certs:/etc/nginx/certs:ro"
       - "vhost:/etc/nginx/vhost.d"
       - "nginx-html:/usr/share/nginx/html"
+  letsencrypt:
+    depends_on:
+      - nginx-proxy
+    environment:
+      DEFAULT_EMAIL: joth.moss@googlemail.com
+      NGINX_PROXY_CONTANER: nginx-proxy
+    image: jrcs/letsencrypt-nginx-proxy-companion
+    privileged: true
+    userns_mode: host
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "certs:/etc/nginx/certs:rw"
+      - "vhost:/etc/nginx/vhost.d"
+      - "nginx-html:/usr/share/nginx/html"
   rabbitmq:
     depends_on:
       - nginx-proxy
