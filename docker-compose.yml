@@ -115,6 +115,7 @@ services:
       - VIRTUAL_HOST=${GRAFANA_V_HOST}
       - VIRTUAL_PROTO=http
       - VIRTUAL_PORT=3000
+      - LETSENCRYPT_HOST=${GRAFANA_V_HOST}
   loki:
     image: grafana/loki:1.4.1
     command: -config.file=/etc/loki/local-config.yaml
