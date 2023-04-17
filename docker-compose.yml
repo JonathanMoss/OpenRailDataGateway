@@ -55,6 +55,7 @@ services:
       VIRTUAL_HOST: ${RMQ_V_HOST}
       VIRTUAL_PROTO: http
       VIRTUAL_PORT: 15672
+      LETSENCRYPT_HOST: ${RMQ_V_HOST}
     ports:
       - "5672:5672"
       - "5671:5671"
