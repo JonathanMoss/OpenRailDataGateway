@@ -462,15 +462,15 @@ class NRODConnection(pydantic.BaseModel):
         default=None
     )
 
-    topics: List[str] = pydantic.Field(
-        title='A list of topics in which to subscribe to',
-        default=[TD_TOPIC]
-    )
-
     # topics: List[str] = pydantic.Field(
     #     title='A list of topics in which to subscribe to',
-    #     default=[TD_TOPIC, MVT_TOPIC, VSTP_TOPIC, PPM_TOPIC, TSR_TOPIC]
+    #     default=[TD_TOPIC]
     # )
+
+    topics: List[str] = pydantic.Field(
+        title='A list of topics in which to subscribe to',
+        default=[TD_TOPIC, MVT_TOPIC, VSTP_TOPIC, PPM_TOPIC, TSR_TOPIC]
+    )
 
     def define_connection(self) -> None:
         """Define the STOMP connection."""
