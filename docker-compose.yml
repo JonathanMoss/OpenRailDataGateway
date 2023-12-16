@@ -151,7 +151,6 @@ services:
     command: >
       /bin/sh -c "
         apk add --no-cache curl
-        echo 'waiting for grafana'
         sleep 5s
         cd /grafana
         curl --request POST http://grafana:3000/api/datasources --header 'Content-Type: application/json' -d @datasources.json
