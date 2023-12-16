@@ -133,14 +133,6 @@ services:
       - /var/lib/docker/containers:/var/lib/docker/containers
       - ./promtail/docker-config.yml:/etc/promtail/docker-config.yml
     command: -config.file=/etc/promtail/docker-config.yml
-  # atmoz-sftp:
-  #   container_name: sftp
-  #   image: atmoz/sftp
-  #   volumes:
-  #     - ${CIF_FOLDER}:/home/${SFTP_USER}/cif
-  #   ports:
-  #     - "2222:22"
-  #   command: ${SFTP_USER}:${SFTP_PASS}:1001
   grafana-dashboards:
     container_name: grafana-dashboard
     image: alpine:3.10
@@ -150,13 +142,13 @@ services:
       - ./grafana:/grafana
     command: >
       /bin/sh -c "
-        apk add --no-cache curl
-        sleep 5s
-        cd /grafana
-        curl --request POST http://grafana:3000/api/datasources --header 'Content-Type: application/json' -d @datasources.json
-        curl --request POST http://grafana:3000/api/dashboards/db --header 'Content-Type: application/json' -d @OpenRailDataGatewayDashboard.json
-        curl --request POST http://grafana:3000/api/dashboards/db --header 'Content-Type: application/json' -d @RabbitMQDashboard.json"
-        curl --request POST http://grafana:3000/api/dashboards/db --header 'Content-Type: application/json' -d @Darwin.json"
+        apk add --no-cache curl"
+        # sleep 5s
+        # cd /grafana
+        # curl --request POST http://grafana:3000/api/datasources --header 'Content-Type: application/json' -d @datasources.json
+        # curl --request POST http://grafana:3000/api/dashboards/db --header 'Content-Type: application/json' -d @OpenRailDataGatewayDashboard.json
+        # curl --request POST http://grafana:3000/api/dashboards/db --header 'Content-Type: application/json' -d @RabbitMQDashboard.json"
+        # curl --request POST http://grafana:3000/api/dashboards/db --header 'Content-Type: application/json' -d @Darwin.json"
 volumes:
   logs: ~
   conf: ~
