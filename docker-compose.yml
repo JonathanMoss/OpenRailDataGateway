@@ -121,24 +121,26 @@ services:
       - VIRTUAL_PROTO=http
       - VIRTUAL_PORT=3000
       - LETSENCRYPT_HOST=${GRAFANA_V_HOST}
-  loki:
-    container_name: loki
-    image: grafana/loki:1.4.1
-    command: -config.file=/etc/loki/local-config.yaml
+  # loki:
+  #   container_name: loki
+  #   image: grafana/loki:1.4.1
+  #   command: -config.file=/etc/loki/local-config.yaml
   promtail:
+    container_name: promtail
     image: grafana/promtail:1.4.1
+    restart: unless-stopped
     volumes:
       - /var/lib/docker/containers:/var/lib/docker/containers
       - ./promtail/docker-config.yml:/etc/promtail/docker-config.yml
     command: -config.file=/etc/promtail/docker-config.yml
-  atmoz-sftp:
-    container_name: sftp
-    image: atmoz/sftp
-    volumes:
-      - ${CIF_FOLDER}:/home/${SFTP_USER}/cif
-    ports:
-      - "2222:22"
-    command: ${SFTP_USER}:${SFTP_PASS}:1001
+  # atmoz-sftp:
+  #   container_name: sftp
+  #   image: atmoz/sftp
+  #   volumes:
+  #     - ${CIF_FOLDER}:/home/${SFTP_USER}/cif
+  #   ports:
+  #     - "2222:22"
+  #   command: ${SFTP_USER}:${SFTP_PASS}:1001
   grafana-dashboards:
     container_name: grafana-dashboard
     image: alpine:3.10
