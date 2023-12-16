@@ -464,7 +464,7 @@ class NRODConnection(pydantic.BaseModel):
 
     topics: List[str] = pydantic.Field(
         title='A list of topics in which to subscribe to',
-        default=[TD_TOPIC, MVT_TOPIC]
+        default=[S_CLASS]
     )
 
     # topics: List[str] = pydantic.Field(
