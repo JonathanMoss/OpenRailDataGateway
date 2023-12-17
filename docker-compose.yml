@@ -114,13 +114,15 @@ services:
     user: "1000"
     restart: unless-stopped
     environment:
-      - GF_AUTH_BASIC_ENABLED=false
-      - GF_AUTH_ANONYMOUS_ENABLED=true
-      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_BASIC_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ENABLED=false
       - VIRTUAL_HOST=${GRAFANA_V_HOST}
       - VIRTUAL_PROTO=http
       - VIRTUAL_PORT=3000
       - LETSENCRYPT_HOST=${GRAFANA_V_HOST}
+      - GF_SECURITY_ADMIN_PASSWORD=${GFA_PASSWORD}
+      - GF_SECURITY_ADMIN_USER=${GFA_USER}
+      # - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
   # loki:
   #   container_name: loki
   #   image: grafana/loki:1.4.1
