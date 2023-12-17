@@ -99,6 +99,23 @@ services:
       RMQ_HOST: ${RMQ_HOST}
     volumes:
       - "logs:/var/www/logs"
+  ntfy:
+    container_name: ntfy
+    restart: unless-stopped
+    image: binwiederhier/ntfy
+    command: serve
+    environment:
+      NTFY_BASE_URL: ${NTFY_V_HOST}
+      NTFY_CACHE_FILE: /var/lib/ntfy/cache.db
+      VIRTUAL_HOST: ${NTFY_V_HOST}
+      LETSENCRYPT_HOST: ${NTFY_V_HOST}
+      NTFY_BEHIND_PROXY: true
+      VIRTUAL_PROTO: http
+      VIRTUAL_PORT: 80
+    volumes:
+      - ./:/var/lib/ntfy
+    # ports:
+    #   - 80:80
   prometheus:
     container_name: prometheus-svc
     restart: unless-stopped
