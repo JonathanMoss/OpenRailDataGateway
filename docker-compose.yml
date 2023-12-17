@@ -105,7 +105,7 @@ services:
     image: binwiederhier/ntfy
     command: serve
     environment:
-      NTFY_BASE_URL: ${NTFY_V_HOST}
+      NTFY_BASE_URL: http://${NTFY_V_HOST}
       NTFY_CACHE_FILE: /var/lib/ntfy/cache.db
       VIRTUAL_HOST: ${NTFY_V_HOST}
       LETSENCRYPT_HOST: ${NTFY_V_HOST}
