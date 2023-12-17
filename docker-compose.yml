@@ -61,29 +61,27 @@ services:
     ports:
       - "5672:5672"
       - "5671:5671"
-  # darwin:
-  #   container_name: darwin
-  #   build:
-  #     context: "."
-  #     dockerfile: "./docker/darwin/Dockerfile"
-  #   restart: unless-stopped
-  #   environment:
-  #     RMQ_PROD_USER: ${RMQ_PROD_USER}
-  #     RMQ_PROD_PASS: ${RMQ_PROD_PASS}
-  #     NROD_USER: ${NROD_USER}
-  #     NROD_PASS: ${NROD_PASS}
-  #     LOG_DIR: "/var/www/logs"
-  #     LOG_LEVEL: "DEBUG"
-  #     RMQ_PORT: ${RMQ_PORT}
-  #     RMQ_HOST: ${RMQ_HOST}
-  #     DARWIN_TOPIC: ${DARWIN_TOPIC}
-  #     DARWIN_PORT: ${DARWIN_PORT}
-  #     DARWIN_HOST: ${DARWIN_HOST}
-  #     DARWIN_USER: ${DARWIN_USER}
-  #     DARWIN_PASS: ${DARWIN_PASS}
-  #     DARWIN_STATUS: ${DARWIN_STATUS}
-  #   volumes:
-  #     - "logs:/var/www/logs"
+  darwin:
+    container_name: darwin_pp
+    build:
+      context: "."
+      dockerfile: "./docker/darwin/Dockerfile"
+    restart: unless-stopped
+    environment:
+      RMQ_PROD_USER: ${RMQ_PROD_USER}
+      RMQ_PROD_PASS: ${RMQ_PROD_PASS}
+      LOG_DIR: "/var/www/logs"
+      LOG_LEVEL: "DEBUG"
+      RMQ_PORT: ${RMQ_PORT}
+      RMQ_HOST: ${RMQ_HOST}
+      DARWIN_TOPIC: "darwin.pushport-v16"
+      DARWIN_PORT: 61613
+      DARWIN_HOST: "darwin-dist-44ae45.nationalrail.co.uk"
+      DARWIN_USER: ${DARWIN_USER}
+      DARWIN_PASS: ${DARWIN_PASS}
+      DARWIN_STATUS: "darwin.status"
+    volumes:
+      - "logs:/var/www/logs"
   nrod:
     container_name: nrod
     build:
