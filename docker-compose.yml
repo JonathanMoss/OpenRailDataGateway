@@ -172,3 +172,4 @@ volumes:
   certs: ~
   vhost: ~
   nginx-html: ~
+  portainer-data: ~
