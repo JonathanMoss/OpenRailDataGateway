@@ -165,6 +165,7 @@ services:
       - LETSENCRYPT_HOST=${ADMIN_PT_HOST}
       - VIRTUAL_HOST=${ADMIN_PT_HOST}
       - VIRTUAL_PROTO=http
+      - VIRTUAL_PORT=9000
 volumes:
   logs: ~
   conf: ~
