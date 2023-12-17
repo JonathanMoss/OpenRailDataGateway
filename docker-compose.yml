@@ -151,6 +151,20 @@ services:
         curl --request POST http://grafana:3000/api/dashboards/db --header 'Content-Type: application/json' --user '${GFA_USER}:${GFA_PASSWORD}' -d @OpenRailDataGatewayDashboard.json
         curl --request POST http://grafana:3000/api/dashboards/db --header 'Content-Type: application/json' --user '${GFA_USER}:${GFA_PASSWORD}' -d @RabbitMQDashboard.json
         curl --request POST http://grafana:3000/api/dashboards/db --header 'Content-Type: application/json' --user '${GFA_USER}:${GFA_PASSWORD}' -d @Darwin.json"
+  portainer:
+    container_name: portainer
+    image: portainer/portainer:latest
+    ports:
+      - "9000:9000"
+    command: -H unix:///var/run/docker.sock
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer-data:/data
+    restart: always
+    environment:
+      - LETSENCRYPT_HOST=${ADMIN_PT_HOST}
+      - VIRTUAL_HOST=${ADMIN_PT_HOST}
+      - VIRTUAL_PROTO=http
 volumes:
   logs: ~
   conf: ~
