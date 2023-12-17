@@ -258,7 +258,7 @@ class ChangeOfOrigin(pydantic.BaseModel):
         alias='source_system_id'
     )
 
-    reason_code: str = pydantic.Field(
+    reason_code: Optional[str] = pydantic.Field(
         title='The reason code for the COO',
         min_length=2,
         max_length=2,
@@ -758,12 +758,12 @@ class Cancellation(pydantic.BaseModel):
 
         allow_population_by_field_name = True
 
-    source_id: str = pydantic.Field(
+    source_id: Optional[str] = pydantic.Field(
         title='The source device ID',
         alias='source_dev_id'
     )
 
-    data_source: str = pydantic.Field(
+    data_source: Optional[str] = pydantic.Field(
         title='The original data source',
         alias='original_data_source'
     )
