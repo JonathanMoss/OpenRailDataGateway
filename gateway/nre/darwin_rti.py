@@ -35,7 +35,7 @@ RMQ = {
 DARWIN_CON_VARS = {
     'darwin_user': os.getenv('DARWIN_USER'),
     'darwin_pass': os.getenv('DARWIN_PASS'),
-    'darwin_topic': os.getenv('DARWIN_RTI_TOPIC'),
+    'darwin_topic': os.getenv('DARWIN_TOPIC'),
     'darwin_host': os.getenv('DARWIN_HOST'),
     'darwin_port': os.getenv('DARWIN_PORT')
 }
