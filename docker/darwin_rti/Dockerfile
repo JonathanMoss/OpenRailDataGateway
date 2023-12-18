@@ -19,7 +19,7 @@ RUN chown -R tms:tms /var/www && chown -R tms:tms /app
 RUN mkdir -p /app/gateway
 
 COPY ./gateway /app/gateway
-ADD ./docker/darwin/entrypoint.sh ./app/
+ADD ./docker/darwin_rti/entrypoint.sh ./app/
 
 WORKDIR ./app
 
