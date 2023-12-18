@@ -29,7 +29,7 @@ ALL_MESSAGE_C = Counter(
     ['msg'])
 
 RMQ = {
-    'RTI': OutboundConnection('real_time_incidents')
+    'RTI': OutboundConnection('darwin-rti')
 }
 
 DARWIN_CON_VARS = {
