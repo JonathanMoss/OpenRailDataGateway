@@ -82,6 +82,26 @@ services:
       DARWIN_STATUS: "darwin.status"
     volumes:
       - "logs:/var/www/logs"
+  darwin_rti:
+    container_name: darwin_rti
+    build:
+      context: "."
+      dockerfile: "./docker/darwin_rti/Dockerfile"
+    restart: unless-stopped
+    environment:
+      RMQ_PROD_USER: ${RMQ_PROD_USER}
+      RMQ_PROD_PASS: ${RMQ_PROD_PASS}
+      LOG_DIR: "/var/www/logs"
+      LOG_LEVEL: "DEBUG"
+      RMQ_PORT: ${RMQ_PORT}
+      RMQ_HOST: ${RMQ_HOST}
+      DARWIN_TOPIC: "kb.incidents"
+      DARWIN_PORT: 61613
+      DARWIN_HOST: "kb-dist-261e4f.nationalrail.co.uk"
+      DARWIN_USER: ${RTI_USER}
+      DARWIN_PASS: ${RTI_PASS}
+    volumes:
+      - "logs:/var/www/logs"
   nrod:
     container_name: nrod
     build:
