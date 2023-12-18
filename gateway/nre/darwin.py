@@ -145,9 +145,14 @@ class Listener(stomp.ConnectionListener, pydantic.BaseModel):
     @pydantic.validate_arguments
     def format_darwin_message(cls, message: bytes, filters: list) -> dict:
         """format and filter the darwin message"""
-        dump = json.dumps(xmltodict.parse(message)['Pport']['uR'])
-        dump = cls.filter_raw(dump, filters)
-        return json.loads(dump)
+        try:
+            dump = json.dumps(xmltodict.parse(message)['Pport']['uR'])
+            dump = cls.filter_raw(dump, filters)
+            return json.loads(dump)
+        except KeyError as err:
+            LOG.logger.error(err)
+            LOG.logger.error(message)
+            return {}
 
     @pydantic.validate_arguments(config={'arbitrary_types_allowed': True})
     def on_error(self, frame: stomp.utils.Frame) -> None:
@@ -182,7 +187,8 @@ class Listener(stomp.ConnectionListener, pydantic.BaseModel):
         msg = self.format_darwin_message(msg, filters)
 
         # Send to RMQ
-        RMQ[msg_type].send_message(json.dumps(msg))
+        if msg:
+            RMQ[msg_type].send_message(json.dumps(msg))
 
     def on_heartbeat_timeout(self):
         """Called when a STOMP heartbeat is not RX at the expected interval."""
