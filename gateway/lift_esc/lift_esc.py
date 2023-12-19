@@ -118,17 +118,17 @@ class LiftEscStatus(OutboundConnection):
         )
 
         if not response.status_code == 200:
-            # LOG.logger.error(f"Warning: {response.status_code}")
+            LOG.logger.error(f"Warning: {response.status_code}")
             return
 
         data = json.loads(response.text).get('data', {})
         data = data.get('assets', {})
         if not data:
-            # LOG.logger.error(f'Missing data: {response.text}')
+            LOG.logger.error(f'Missing data: {response.text}')
             return
 
         if not isinstance(data, list):
-            # LOG.logger.error(f'Missing data: {response.text}')
+            LOG.logger.error(f'Missing data: {response.text}')
             return
 
         ALL_MESSAGE_C.labels(msg='all').inc()
