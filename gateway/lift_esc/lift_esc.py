@@ -75,13 +75,11 @@ class LiftEscStatus(OutboundConnection):
 
         super().__init__(RMQ_EXCHANGE)
         self.bearer_token = get_auth()
-        LOG.logger.error(self.bearer_token)
         self.lne_headers = {
             'Content-Type': 'application/json',
             'x-lne-api-key': KEY,
             'Authorization': f'Bearer {self.bearer_token}'
         }
-        LOG.logger.error(self.lne_headers)
 
     def process(self, data: list) -> None:
         """Process the inbound message"""
@@ -94,23 +92,22 @@ class LiftEscStatus(OutboundConnection):
     def put_on_broker(self, data: dict):
         """Put the messages on the broker for consumption"""
 
-        self.send_msg(
+        self.send_message(
             json.dumps(data)
         )
 
     def fetch(self):
         """Fetch from the API, place on broker"""
 
-        LOG.logger.error(self.lne_headers)
         response = requests.post(
             URI,
             headers=self.lne_headers,
             json={'query': QRY},
-            timeout=10
+            timeout=30
         )
 
         if not response.status_code == 200:
-            LOG.logger.error(f"Warning: {response.status_code}")
+            LOG.logger.error(f"Warning - Status Code: {response.status_code}")
             return
 
         data = json.loads(response.text).get('data', {})
