@@ -84,7 +84,7 @@ class Listener(stomp.ConnectionListener, pydantic.BaseModel):
 
         # Increment logging count
         ALL_MESSAGE_C.labels('all').inc()
-        ALL_MESSAGE_C.labels('real_time_incidents').inc()
+        ALL_MESSAGE_C.labels(frame.headers['INCIDENT_MESSAGE_STATUS']).inc()
 
         # Log latency
         self.log_msg_latency(frame)
