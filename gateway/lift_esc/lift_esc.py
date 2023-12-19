@@ -16,7 +16,7 @@ CHECK_FREQ = 60
 
 LOG = GatewayLogger(__file__, False)
 RMQ_EXCHANGE = 'lift-esc-status'
-URI = "https://nr-lift-and-escalator.azure-api.net/gateway/v1/"
+URI = "https://nr-lift-and-escalator.azure-api.net/gateway/v2/"
 
 CORRECTIONS = {
     'nottingham_(midland)': 'nottingham_station',
