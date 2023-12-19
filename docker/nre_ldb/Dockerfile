@@ -1,4 +1,4 @@
-FROM python:3.12.1-slim-bullseye
+FROM python:3.10.13-slim-bullseye
 
 RUN apt-get update && apt-get upgrade -yq
 RUN apt-get install -yq sudo python3-pip
