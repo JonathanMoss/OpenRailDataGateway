@@ -138,6 +138,7 @@ class LiftEscStatus(OutboundConnection):
         response = requests.post(URI, headers=headers, data=quy)
 
         if not response.status_code == 200:
+            LOG.logger.error(f"Warning: {response.status_code}")
             return
 
         data = json.loads(response.text)
