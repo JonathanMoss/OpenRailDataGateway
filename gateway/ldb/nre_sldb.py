@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Create and maintains a connection to NRE SLDB"""
 
+#pylint: disable=E0401
+
 import os
 import time
 from datetime import datetime
@@ -21,7 +23,7 @@ RMQ_EXCHANGE = 'nre-ldb'
 
 if None in (LDB_TOKEN, WSDL):
     MSG = "Missing environment variables"
-    raise Exception(MSG)
+    raise ValueError(MSG)
 
 ALL_MSG_COUNT = Counter(
     'ldb_received_count',
