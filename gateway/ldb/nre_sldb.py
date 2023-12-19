@@ -16,21 +16,21 @@ from prometheus_client import start_http_server, Counter
 CRS = os.getenv('CRS', 'CRE,PAD')
 LDB_TOKEN = os.getenv('SLDB_TOKEN')
 WSDL = os.getenv('SLDB_WSDL')
-CHECK_FREQ = int(os.getenv('SLDB_FREQ'))
-RMQ_EXCHANGE = os.getenv('SLDB_RMQ_EXCHANGE')
+CHECK_FREQ = 20
+RMQ_EXCHANGE = 'nre-ldb'
 
-if None in (LDB_TOKEN, WSDL, CHECK_FREQ, RMQ_EXCHANGE):
+if None in (LDB_TOKEN, WSDL):
     MSG = "Missing environment variables"
     raise Exception(MSG)
 
 ALL_MSG_COUNT = Counter(
-    'all_received_msg_count',
+    'ldb_received_count',
     'All Recevied Message Count',
     ['msg']
 )
 
 MSG_COUNT_BY_CRS = Counter(
-    'received_msg_count_crs',
+    'received_msg_count_by_crs',
     'Message Count by CRS',
     ['msg']
 )

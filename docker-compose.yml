@@ -201,6 +201,22 @@ services:
       - VIRTUAL_HOST=${ADMIN_PT_HOST}
       - VIRTUAL_PROTO=http
       - VIRTUAL_PORT=9000
+  nre-ldb:
+    container_name: nre-ldb
+    build:
+      context: "."
+      dockerfile: "./docker/nre_ldb/Dockerfile"
+    restart: unless-stopped
+    environment:
+      SLDB_TOKEN: ${SLDB_TOKEN}
+      SLDB_WSDL: http://lite.realtime.nationalrail.co.uk/OpenLDBSVWS/wsdl.aspx?ver=2017-10-01
+      RMQ_PROD_USER: ${RMQ_PROD_USER}
+      RMQ_PROD_PASS: ${RMQ_PROD_PASS}
+      RMQ_PORT: ${RMQ_PORT}
+      RMQ_HOST: ${RMQ_HOST}
+      CRS: CRE,PAD
+    volumes:
+      - "logs:/var/www/logs"
 volumes:
   logs: ~
   conf: ~
