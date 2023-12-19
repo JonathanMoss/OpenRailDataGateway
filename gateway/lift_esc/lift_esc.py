@@ -61,7 +61,7 @@ def get_auth() -> str:
             AUTH_URL,
             headers=headers,
             data=payload,
-            timeout=10)
+            timeout=30)
         return json.loads(response.text).get('access_token', "")
     except Exception:
         return ""
@@ -75,11 +75,13 @@ class LiftEscStatus(OutboundConnection):
 
         super().__init__(RMQ_EXCHANGE)
         self.bearer_token = get_auth()
+        LOG.logger.error(self.bearer_token)
         self.lne_headers = {
             'Content-Type': 'application/json',
             'x-lne-api-key': KEY,
             'Authorization': f'Bearer {self.bearer_token}'
         }
+        LOG.logger.error(self.lne_headers)
 
     def process(self, data: list) -> None:
         """Process the inbound message"""
