@@ -151,6 +151,7 @@ class LiftEscStatus(OutboundConnection):
         try:
             data = data['data']['status']
         except KeyError:
+            LOG.logger.error(response.text)
             return
 
         if not isinstance(data, list):
