@@ -71,8 +71,7 @@ def get_auth() -> str:
             "POST", 
             AUTH_URL,
             headers=headers,
-            data=payload,
-            timeout=10)
+            data=payload)
         return json.loads(response.text).get('access_token', "")
     except Exception:
         return ""
