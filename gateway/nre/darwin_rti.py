@@ -24,8 +24,8 @@ from rabbitmq.publish import OutboundConnection
 from gateway.logging.gateway_logging import GatewayLogger
 
 ALL_MESSAGE_C = Counter(
-    'darwin_inbound',
-    'Inbound Darwin Total Messages',
+    'darwin_rti_inbound',
+    'Inbound Darwin RTI Total Messages',
     ['msg'])
 
 RMQ = {
@@ -41,8 +41,8 @@ DARWIN_CON_VARS = {
 }
 
 ALL_MESSAGE_L = Histogram(
-    'darwin_inbound_message_latency',
-    'Inbound DARWIN message latency')
+    'darwin_rti_inbound_message_latency',
+    'Inbound DARWIN RTI message latency')
 
 LOG = GatewayLogger(__file__, False)
 
