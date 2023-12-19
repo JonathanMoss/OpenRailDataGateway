@@ -14,7 +14,7 @@ from gateway.rabbitmq.publish import OutboundConnection
 from prometheus_client import start_http_server, Counter
 
 
-CHECK_FREQ = 5
+CHECK_FREQ = 60
 
 LOG = GatewayLogger(__file__, False)
 RMQ_EXCHANGE = 'lift-esc-status'
@@ -89,37 +89,6 @@ class LiftEscStatus(OutboundConnection):
             'Authorization': f'Bearer {self.bearer_token}'
         }
 
-    @staticmethod
-    def nice_name(station: str):
-        """Convert a location name to an acumen system name"""
-
-        words = station.split(' ')
-        if len(words) == 1:
-            station = f'{station} station'
-
-        station = station.lower().replace(' ', '_')
-        if station in CORRECTIONS:
-            station = CORRECTIONS[station]
-
-        return station
-
-    @staticmethod
-    def is_valid_station(station: str) -> bool:
-        """Validate the station name"""
-
-        if not isinstance(station, str):
-            return False
-
-        station = str(station).strip()
-
-        if 'n/a' in station or 'N/A' in station:
-            return False
-
-        if not station:
-            return False
-
-        return True
-
     def process(self, data: list) -> dict:
         """Process the inbound message"""
 
@@ -177,9 +146,7 @@ class LiftEscStatus(OutboundConnection):
             return
 
         data = json.loads(response.text)
-
-        if not data:
-            return
+        print(data)
 
         try:
             data = data['data']['status']
