@@ -159,7 +159,7 @@ class LiftEscStatus(OutboundConnection):
 
 if __name__ == "__main__":
 
-    LOG.error(f'{__file__} Running...')
+    LOG.logger.error(f'{__file__} Running...')
     LIFTESC = LiftEscStatus()
 
     schedule.every(CHECK_FREQ).seconds.do(LIFTESC.fetch)
