@@ -75,10 +75,6 @@ class LiftEscStatus(OutboundConnection):
 
         super().__init__(RMQ_EXCHANGE)
         self.bearer_token = get_auth()
-        LOG.logger.error(self.bearer_token)
-        if not self.bearer_token:
-            LOG.logger.error(f"Warning: no BEARER TOKEN")
-            exit(1)
         self.lne_headers = {
             'Content-Type': 'application/json',
             'x-lne-api-key': KEY,
@@ -103,6 +99,7 @@ class LiftEscStatus(OutboundConnection):
     def fetch(self):
         """Fetch from the API, place on broker"""
 
+        LOG.logger.error(self.lne_headers)
         response = requests.post(
             URI,
             headers=self.lne_headers,
