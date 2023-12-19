@@ -206,6 +206,16 @@ class Listener(stomp.ConnectionListener, pydantic.BaseModel):
         default=OutboundConnection('nrod-vstp')
     )
 
+    ppm_rmq: OutboundConnection = pydantic.Field(
+        title='The outbound RMQ connection object for PPM',
+        default=OutboundConnection('nrod-ppm')
+    )
+
+    tsr_rmq: OutboundConnection = pydantic.Field(
+        title='The outbound RMQ connection object for TSR',
+        default=OutboundConnection('nrod-tsr')
+    )
+
     @pydantic.validate_arguments(config=dict(arbitrary_types_allowed=True))
     def on_error(self, frame: stomp.utils.Frame) -> None:
         """STOMP Error Frame Received."""
@@ -374,6 +384,13 @@ class Listener(stomp.ConnectionListener, pydantic.BaseModel):
             ALL_MESSAGE_C.labels(msg='vstp').inc()
             self.process_vstp(msg.body[0])
             return
+        
+        if dest == PPM_TOPIC:
+            ALL_MESSAGE_C.labels(msg='RTPPM').inc()
+            self.ppm_rmq.send_message(
+                msg=msg.body,
+                headers=msg.headers
+            )
 
         for element in msg.body:
             if dest == TD_TOPIC:
