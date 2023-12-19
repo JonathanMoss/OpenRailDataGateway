@@ -13,7 +13,6 @@ from gateway.logging.gateway_logging import GatewayLogger
 from gateway.rabbitmq.publish import OutboundConnection
 from prometheus_client import start_http_server, Counter
 
-
 CHECK_FREQ = 30
 
 LOG = GatewayLogger(__file__, False)
@@ -21,16 +20,6 @@ RMQ_EXCHANGE = 'lift-esc-status'
 URI = "https://nr-lift-and-escalator.azure-api.net/graphql/v2"
 KEY = os.getenv('LNE_P_KEY', '')
 AUTH_URL = "https://nr-lift-and-escalator.azure-api.net/auth/token/"
-
-CORRECTIONS = {
-    'nottingham_(midland)': 'nottingham_station',
-    'london_kings_cross': 'kings_cross',
-    'highbury_&_islington': 'highbury_and_islington',
-    'milton_keynes': 'milton_keynes_central',
-    'stoke_on_trent': 'stoke-on-trent_station',
-    'wigan_nw': 'wigan_north_western'
-
-}
 
 ALL_MESSAGE_C = Counter(
     'lift_esc_total',
@@ -86,6 +75,9 @@ class LiftEscStatus(OutboundConnection):
 
         super().__init__(RMQ_EXCHANGE)
         self.bearer_token = get_auth()
+        if not self.bearer_token:
+            LOG.logger.error(f"Warning: no BEARER TOKEN")
+            exit(1)
         self.lne_headers = {
             'Content-Type': 'application/json',
             'x-lne-api-key': KEY,

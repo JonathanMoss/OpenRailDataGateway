@@ -229,6 +229,7 @@ services:
       RMQ_HOST: ${RMQ_HOST}
       LOG_DIR: "/var/www/logs"
       LOG_LEVEL: "DEBUG"
+      LNE_P_KEY: ${LNE_P_KEY}
     volumes:
       - "logs:/var/www/logs"
 volumes:
