@@ -71,7 +71,8 @@ def get_auth() -> str:
             "POST", 
             AUTH_URL,
             headers=headers,
-            data=payload)
+            data=payload,
+            timeout=10)
         return json.loads(response.text).get('access_token', "")
     except Exception:
         return ""
@@ -85,7 +86,7 @@ class LiftEscStatus(OutboundConnection):
 
         super().__init__(RMQ_EXCHANGE)
         self.bearer_token = get_auth()
-        self.headers = {
+        self.lne_headers = {
             'Content-Type': 'application/json',
             'x-lne-api-key': KEY,
             'Authorization': f'Bearer {self.bearer_token}'
@@ -111,7 +112,7 @@ class LiftEscStatus(OutboundConnection):
 
         response = requests.post(
             URI,
-            headers=self.headers,
+            headers=self.lne_headers,
             json={'query': QRY},
             timeout=10
         )
