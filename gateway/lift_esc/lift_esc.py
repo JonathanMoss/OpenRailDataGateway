@@ -19,7 +19,7 @@ CHECK_FREQ = 5
 LOG = GatewayLogger(__file__, False)
 RMQ_EXCHANGE = 'lift-esc-status'
 URI = "https://nr-lift-and-escalator.azure-api.net/graphql/v2"
-KEY = os.getenv('LNE_P_KEY', 'c64a27663a374b6cac317b044c5f7d71')
+KEY = os.getenv('LNE_P_KEY', '')
 AUTH_URL = "https://nr-lift-and-escalator.azure-api.net/auth/token/"
 
 CORRECTIONS = {
