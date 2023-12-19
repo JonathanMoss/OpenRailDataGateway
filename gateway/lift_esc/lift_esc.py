@@ -75,6 +75,7 @@ class LiftEscStatus(OutboundConnection):
 
         super().__init__(RMQ_EXCHANGE)
         self.bearer_token = get_auth()
+        LOG.logger.error(self.bearer_token)
         if not self.bearer_token:
             LOG.logger.error(f"Warning: no BEARER TOKEN")
             exit(1)
