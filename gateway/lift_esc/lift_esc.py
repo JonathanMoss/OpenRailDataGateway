@@ -14,11 +14,13 @@ from gateway.rabbitmq.publish import OutboundConnection
 from prometheus_client import start_http_server, Counter
 
 
-CHECK_FREQ = 60
+CHECK_FREQ = 5
 
 LOG = GatewayLogger(__file__, False)
 RMQ_EXCHANGE = 'lift-esc-status'
-URI = "https://nr-lift-and-escalator.azure-api.net/gateway/v2/"
+URI = "https://nr-lift-and-escalator.azure-api.net/graphql/v2"
+KEY = os.getenv('LNE_P_KEY', 'c64a27663a374b6cac317b044c5f7d71')
+AUTH_URL = "https://nr-lift-and-escalator.azure-api.net/auth/token/"
 
 CORRECTIONS = {
     'nottingham_(midland)': 'nottingham_station',
@@ -35,6 +37,43 @@ ALL_MESSAGE_C = Counter(
     'Inbound Lift & Escalator Message Count',
     ['msg'])
 
+QRY = """
+query {
+	assets {
+		blockId
+		crs
+		description
+		displayName
+		id
+		location
+		sensorId
+		status {
+			engineerOnSite
+			independent
+			isolated
+			sensorId
+			status
+		}
+		type
+	}
+}
+"""
+
+
+def get_auth() -> str:
+    """Returns the authentication token"""
+    payload = {}
+    headers = {
+        'x-lne-api-key': KEY,
+        'Cache-Control': 'no-cache'
+    }
+    try:
+        response = requests.request("POST", AUTH_URL, headers=headers, data=payload)
+        return json.loads(response.text).get('access_token', "")
+    except Exception:
+        return ""
+
+
 
 class LiftEscStatus(OutboundConnection):
     """Functions to fetch API data and forward to broker"""
@@ -43,6 +82,12 @@ class LiftEscStatus(OutboundConnection):
         """Initialisation"""
 
         super().__init__(RMQ_EXCHANGE)
+        self.bearer_token = get_auth()
+        self.headers = {
+            'Content-Type': 'application/json',
+            'x-lne-api-key': KEY,
+            'Authorization': f'Bearer {self.bearer_token}'
+        }
 
     @staticmethod
     def nice_name(station: str):
@@ -125,19 +170,7 @@ class LiftEscStatus(OutboundConnection):
     def fetch(self):
         """Fetch from the API, place on broker"""
 
-        quy = "{\"query\":\" query MyQuery {\\n  status {\\n"
-        quy += "blockTitle\\n    branch\\n    engineerOnSite\\n"
-        quy += "    independant\\n    isolated\\n    lat\\n    location\\n    "
-        quy += "long\\n    postCode\\n    route\\n    sensorId\\n    "
-        quy += "station\\n    status\\n    territory\\n    toc\\n    type\\n"
-        quy += "    updatedTime\\n    uprn\\n    blockId\\n  "
-        quy += "}\\n}\",\"variables\":{}}"
-
-        headers = {
-            'Content-Type': 'application/json'
-        }
-
-        response = requests.post(URI, headers=headers, data=quy, timeout=10)
+        response = requests.post(URI, headers=self.headers, json={'query': QRY}, timeout=10)
 
         if not response.status_code == 200:
             LOG.logger.error(f"Warning: {response.status_code}")
@@ -163,7 +196,7 @@ class LiftEscStatus(OutboundConnection):
 
 if __name__ == "__main__":
 
-    LOG.logger.error(f'{__file__} Running...')
+    # LOG.logger.error(f'{__file__} Running...')
     LIFTESC = LiftEscStatus()
 
     schedule.every(CHECK_FREQ).seconds.do(LIFTESC.fetch)
