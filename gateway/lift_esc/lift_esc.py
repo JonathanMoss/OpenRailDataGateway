@@ -1,6 +1,6 @@
 """Connect to the lift and escalator API and forward to message broker"""
 
-#pylint: disable=E0401, C0413, C0411
+#pylint: disable=E0401, C0413, C0411, W0718
 
 import json
 import time
@@ -14,7 +14,7 @@ from gateway.rabbitmq.publish import OutboundConnection
 from prometheus_client import start_http_server, Counter
 
 
-CHECK_FREQ = 60
+CHECK_FREQ = 30
 
 LOG = GatewayLogger(__file__, False)
 RMQ_EXCHANGE = 'lift-esc-status'
@@ -59,7 +59,6 @@ query {
 }
 """
 
-
 def get_auth() -> str:
     """Returns the authentication token"""
     payload = {}
@@ -68,11 +67,15 @@ def get_auth() -> str:
         'Cache-Control': 'no-cache'
     }
     try:
-        response = requests.request("POST", AUTH_URL, headers=headers, data=payload)
+        response = requests.request(
+            "POST", 
+            AUTH_URL,
+            headers=headers,
+            data=payload,
+            timeout=10)
         return json.loads(response.text).get('access_token', "")
     except Exception:
         return ""
-
 
 
 class LiftEscStatus(OutboundConnection):
@@ -89,81 +92,55 @@ class LiftEscStatus(OutboundConnection):
             'Authorization': f'Bearer {self.bearer_token}'
         }
 
-    def process(self, data: list) -> dict:
+    def process(self, data: list) -> None:
         """Process the inbound message"""
 
-        ret_dict = {}
-
-        ALL_MESSAGE_C.labels(msg='all').inc()
-
         for item in data:
-            stn_name = item.get('station', None)
-            if not self.is_valid_station(stn_name):
-                continue
-
-            if stn_name not in ret_dict:
-                ret_dict[stn_name] = []
-
-            location = item['location']
-            if not self.is_valid_station(location):
-                location = item['blockTitle']
-
-            ALL_MESSAGE_C.labels(msg=location).inc()
-            ret_dict[stn_name].append(
-                {
-                    'location': location,
-                    'type': item['type'],
-                    'status': item['status'],
-                    'engineerOnSite': item['engineerOnSite'],
-                    'isolated': item['isolated']
-                }
-            )
-
-        return ret_dict
+            crs = item.get('crs', None)
+            if crs:
+                ALL_MESSAGE_C.labels(msg=crs).inc()
 
     def put_on_broker(self, data: dict):
         """Put the messages on the broker for consumption"""
 
-        for location, val_list in data.items():
-
-            msg = {}
-            msg['data'] = {}
-            msg['data']['status'] = val_list
-            headers = {'location': self.nice_name(location)}
-
-            self.send_msg(
-                msg,
-                headers=headers
-            )
+        self.send_msg(
+            json.dumps(data)
+        )
 
     def fetch(self):
         """Fetch from the API, place on broker"""
 
-        response = requests.post(URI, headers=self.headers, json={'query': QRY}, timeout=10)
+        response = requests.post(
+            URI,
+            headers=self.headers,
+            json={'query': QRY},
+            timeout=10
+        )
 
         if not response.status_code == 200:
-            LOG.logger.error(f"Warning: {response.status_code}")
+            # LOG.logger.error(f"Warning: {response.status_code}")
             return
 
-        data = json.loads(response.text)
-        print(data)
-
-        try:
-            data = data['data']['status']
-        except KeyError:
-            LOG.logger.error(response.text)
+        data = json.loads(response.text).get('data', {})
+        data = data.get('assets', {})
+        if not data:
+            # LOG.logger.error(f'Missing data: {response.text}')
             return
 
         if not isinstance(data, list):
+            # LOG.logger.error(f'Missing data: {response.text}')
             return
 
-        ret_val = self.process(data)
-        self.put_on_broker(ret_val)
+        ALL_MESSAGE_C.labels(msg='all').inc()
+
+        self.process(data)
+        self.put_on_broker(data)
 
 
 if __name__ == "__main__":
 
-    # LOG.logger.error(f'{__file__} Running...')
+    start_http_server(8000)
+    LOG.logger.error(f'{__file__} Running...')
     LIFTESC = LiftEscStatus()
 
     schedule.every(CHECK_FREQ).seconds.do(LIFTESC.fetch)
