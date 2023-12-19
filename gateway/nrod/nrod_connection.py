@@ -386,11 +386,12 @@ class Listener(stomp.ConnectionListener, pydantic.BaseModel):
             return
         
         if dest == PPM_TOPIC:
-            ALL_MESSAGE_C.labels(msg='RTPPM').inc()
+            ALL_MESSAGE_C.labels(msg='PPM').inc()
             self.ppm_rmq.send_message(
-                msg=msg.body,
+                msg=json.dumps(msg.body),
                 headers=msg.headers
             )
+            return
 
         for element in msg.body:
             if dest == TD_TOPIC:
