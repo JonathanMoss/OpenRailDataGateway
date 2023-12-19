@@ -1,12 +1,14 @@
 """Connect to the lift and escalator API and forward to message broker"""
 
-import os
-import sys
-sys.path.append(os.getcwd())  # nopep8
+#pylint: disable=E0401, C0413, C0411
+
 import json
 import time
 import schedule
 import requests
+import os
+import sys
+sys.path.append(os.getcwd())  # nopep8
 from gateway.logging.gateway_logging import GatewayLogger
 from gateway.rabbitmq.publish import OutboundConnection
 from prometheus_client import start_http_server, Counter
@@ -135,7 +137,7 @@ class LiftEscStatus(OutboundConnection):
             'Content-Type': 'application/json'
         }
 
-        response = requests.post(URI, headers=headers, data=quy)
+        response = requests.post(URI, headers=headers, data=quy, timeout=10)
 
         if not response.status_code == 200:
             LOG.logger.error(f"Warning: {response.status_code}")
