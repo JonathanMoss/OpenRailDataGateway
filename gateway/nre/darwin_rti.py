@@ -90,7 +90,7 @@ class Listener(stomp.ConnectionListener, pydantic.BaseModel):
         self.log_msg_latency(frame)
 
         # Send to RMQ
-        RMQ['RTI'].send_message(frame.body)
+        RMQ['RTI'].send_message(msg=frame.body, headers=frame.headers)
 
     def on_heartbeat_timeout(self):
         """Called when a STOMP heartbeat is not RX at the expected interval."""
