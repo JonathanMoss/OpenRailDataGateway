@@ -162,7 +162,7 @@ class ChangeOfIdentity(pydantic.BaseModel):
 
         allow_population_by_field_name = True
 
-    source_id: str = pydantic.Field(
+    source_id: Optional[str] = pydantic.Field(
         title='The source device ID',
         alias='source_dev_id'
     )
@@ -243,7 +243,7 @@ class ChangeOfOrigin(pydantic.BaseModel):
 
         allow_population_by_field_name = True
 
-    source_id: str = pydantic.Field(
+    source_id: Optional[str] = pydantic.Field(
         title='The source device ID',
         alias='source_dev_id'
     )
