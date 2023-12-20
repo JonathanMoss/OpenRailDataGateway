@@ -1,23 +1,26 @@
 # OpenRailDataGateway
-Rail open data gateway - deploys a connection to all NROD subscription services
-and places messages on a RabbitMQ Broker for consumption by other services.
+Rail open data gateway - deploys a connection to most NROD, Darwin and NRE subscription services
+and places messages on a RabbitMQ Broker for consumption by other services:
 
-Also includes the following NRE feeds:
-- National Rail Enquiries - Darwin Web Service - Staff Live Departure Board
+- NROD TRUST, VSTP, TD, RTPPM, TSR
+- Darwin Push Port, Darwin Real Time Incidents Feed
+- NRE Live Departure Board
+- NR Lift & Escalator feed
 
 ### Step 1 - identify and prepare the host
 As a containerised application, the application stack can be ran in numerous environments but this readme assumes running on a GNU/Linux system of some description.
 
-We currently run the application stack on a Ubuntu 20.04 LTS small business server on our local network but it can easily be run on a VPS, AWS EC2 instance, hired bare metal server etc... or indeed on localhost.
+We currently run the application stack on a Ubuntu 20.04 LTS small business server on our local network but it can easily be run on a VPS, AWS EC2 instance, hired bare metal server etc... or indeed on your local machine.
 
 ### Step 2 - Prerequisites
 - docker
 - docker-compose
-- pass (Standard Unix Password Manager - optional)
 - credentials for Network Rail open data feeds (NROD)
 - access token for Live Departure Boards feed (NRE - Darwin Web Service (Staff))
+- access credentials for Darwin feeds Push Port/Knowledge Base
+- access key for NR Lifts & Escalator feed
 
-### Step 4 - NROD permissions
+### Step 3 - NROD subscriptions
 The services that connect to NROD assume the following NROD subscriptions; users can set match these subscriptions by logging on to ```datafeeds.networkrail.co.uk``` and navigating to ```My Feeds``` and setting your subscription to:
 - Train Movements: **All TOCs**
 - TD: **All Signalling Areas**
@@ -26,129 +29,48 @@ The services that connect to NROD assume the following NROD subscriptions; users
 - RTPPM: **All TOCs**
 - SCHEDULE: **All Full Daily**, **All Update Daily**
 
-You can of course tailor the subscription to your particular use case but you will need to refactor the corresponding consuming service within ```nrod/nrod_connection.py```:
+### Step 4 - Darwin subscriptions
+Ensure a subscription to the following feeds at ```opendata.nationalrail.co.uk```:
+- Darwin (PushPort)
+- Knowledgebase (KB) Real Time Incidents
 
-```bash
-TD_TOPIC = 'TD_ALL_SIG_AREA'
-MVT_TOPIC = 'TRAIN_MVT_ALL_TOC'
-VSTP_TOPIC = 'VSTP_ALL'
-PPM_TOPIC = 'RTPPM_ALL'
-TSR_TOPIC = 'TSR_ALL_ROUTE'
-```
+### Step 5 - OpenLDBSV/Darwin Staff Webservice
+A Subscription is required for the Live Departure Board service - See details at ```https://wiki.openraildata.com/index.php?title=About_the_National_Rail_Feeds``` for instructions.
 
-### Step 5 - environment variables
+### Step 6 - Lift & Escalator feed (NR)
+Register and subscribe to the graphQL feed here: ```https://portal.nr-lift-and-escalator.net/```
+
+### Step 7 - environment variables
 To function correctly, the following environment variables need to be set and available:
 ```bash
-RMQ_ADMIN_USER
-RMQ_ADMIN_PASS
-RMQ_PROD_USER
-RMQ_PROD_PASS
-RMQ_SUB_USER
-RMQ_SUB_PASS
-NROD_USER
-NROD_PASS
-RMQ_V_HOST
-GRAFANA_V_HOST
-RMQ_HOST
-RMQ_PORT
-CIF_FOLDER
-SFTP_USER
-SFTP_PASS
-SLDB_TOKEN
-SLDB_WSDL
-SLDB_FREQ
-```
-**NROD_USER** and **NROD_PASS** need to be set to your NROD access credentials.
-**SLDB_TOKEN** needs to be set to your NRE access token.
-**SLDB_FREQ** is the polling frequency for live departure boards (in seconds).
-**SLDB_WSDL** is the endpoint URL provided at registration/within documentation:
-  - https://lite.realtime.nationalrail.co.uk/OpenLDBSVWS/wsdl.aspx?ver=2021-11-01
+export RMQ_ADMIN_USER=<RMQ admin account user name>
+export RMQ_ADMIN_PASS=<RMQ admin account password>
+export RMQ_PROD_USER=<RMQ producer account user name>
+export RMQ_PROD_PASS=<RMQ producer account password>
+export RMQ_SUB_USER=<RMQ subscriber account user name>
+export RMQ_SUB_PASS=<RMQ subscriber account password>
+export RMQ_V_HOST=<FQDN for RMQ virtual host>
+export GRAFANA_V_HOST=<FQDN for grafana virtual host>
+export NROD_USER=<NROD credentials - user name>
+export NROD_PASS=<NROD credentials - password>
+export RMQ_PORT=5672
+export RMQ_HOST=rabbitmq
+export GFA_USER=<Grafana admin account user name>
+export GFA_PASSWORD=<Grafana admin account password>
+export ADMIN_PT_HOST=<FQDN for portainer virtual host>
+export DARWIN_USER=<Darwin user name>
+export DARWIN_PASS=<Darwin password>
+export NTFY_V_HOST=<FQDN for ntfy virtual host>
+export RTI_USER=<RTI account user name>
+export RTI_PASS=<RTI account password>
+export SLDB_TOKEN=<Access token for live departure boards>
+export CRS=CRE,PAD - CSV list of CRS
+export LNE_P_KEY=<Primary key for Lifts and Escalators>
+export LNE_S_KEY=<Secondary key for Lifts and Escalators>
 
-The following variables **must** be set thus:
-- **RMQ_HOST**="rabbitmq"
-- **RMQ_PORT**="5672"
-- **CIF_FOLDER**="<FOLDER WHERE YOU WANT THE CIF'S>"
-
-**RMQ_V_HOST** and **GRAFANA_V_HOST** need to be set to the FQDN from where the front end will be accessed.
-
-as an example, we use the following:
-```bash
-export RMQ_V_HOST="rmq.dev.local.com"
-export GRAFANA_V_HOST="gfa.dev.local.com"
-```
-As we are running the services locally, and therefore the above hostnames will not resolve using DNS (As they are on our internal network), we are required to do add the following records to ```/etc/hosts``` on each machine that we will be using to access the application front-end:
-
-```bash
-192.168.1.170      rmq.dev.local.com  # Example
-192.168.1.170      gfa.dev.local.com  # Example
 ```
 
-*This is of course just one way to be able to enter the FQDN in a browser and access a service on your local network, but other methods are outside the scope of this tutorial*
-
-The remaining environment variables can be generated randomly.
-
-Environment variables are set by typing the following at the prompt:
-```bash
-export RMQ_HOST="rabbitmq"
-```
-
-#### Using pass - example
-General:
-```bash
-pass generate rabbitmq/admin/user 15
-pass generate rabbitmq/admin/pass 15
-pass generate rabbitmq/producer/user 15
-pass generate rabbitmq/producer/pass 15
-pass generate rabbitmq/subscriber/user 15
-pass generate rabbitmq/subscriber/pass 15
-```
-
-NROD Credentials:
-```bash
-pass insert nrod/user
-pass insert nrod/pass
-```
-
-SFTP Credentials:
-```bash
-pass insert sftp/user
-pass generate -n sftp/pass 15
-```
-
-Virtual Hosts:
-```bash
-pass insert rabbitmq/v_host
-pass insert grafana/v_host
-```
-
-NRE - Live Departure Boards (Staff):
-pass insert sldb/token
-pass insert sldb_freq
-pass insert sldb/wsdl
-
-Then export to environment:
-```bash
-export RMQ_ADMIN_USER="$(pass rabbitmq/admin/user)"
-export RMQ_ADMIN_PASS="$(pass rabbitmq/admin/pass)"
-export RMQ_PROD_USER="$(pass rabbitmq/producer/user)"
-export RMQ_PROD_PASS="$(pass rabbitmq/producer/pass)"
-export RMQ_SUB_USER="$(pass rabbitmq/subscriber/user)"
-export RMQ_SUB_PASS="$(pass rabbitmq/subscriber/pass)"
-export NROD_USER="$(pass nrod/user)"
-export NROD_PASS="$(pass nrod/pass)"
-export RMQ_V_HOST="$(pass rabbitmq/v_host)"
-export GRAFANA_V_HOST="$(pass grafana/v_host)"
-export RMQ_HOST="rabbitmq"
-export RMQ_PORT="5672"
-export CIF_FOLDER=~/nrod_cif/
-export SFTP_USER="$(pass sftp/user)"
-export SFTP_PASS="$(pass sftp/pass)"
-export SLDB_TOKEN="$(sldb/token)"
-export SLDB_WSDL="$(sldb/wsdl)"
-export SLDB_FREQ="$(sldb/freq)"
-```
-
-### Step 6 - clone the repo
+### Step 8 - clone the repo
 
 ```bash
 git clone git@github.com:JonathanMoss/OpenRailDataGateway.git
@@ -209,64 +131,9 @@ gateway/nrod/train_movement.py
 gateway/nrod/vstp.py
 ```
 
-### CIF Download & Repository
-
-There are 2 scripts contained within ```cif_download```:
-* ```full_cif.sh```
-* ```update_cif.sh```
-
-The full CIF script is aimed at initialising the cif repository and the update script is provided to download each incremental update and is intended to be called daily.
-
-The aim of the gateway functionality in respect of the CIF is to maintain a single full CIF and multiple update CIF's to enable a consuming service to maintain a representative train service database. A simple SFTP server is provisioned for the purpose of downloading the CIF files from the gateway.
-
-#### Environment variables
-
-CIF downloading and SFTP server require the following environment variables to be set, as described above:
-
-```bash
-CIF_FOLDER
-SFTP_USER
-SFTP_PASS
-NROD_USER
-NROD_PASS
-```
-
-#### CIF Folder
-
-When setting up, the location detailed in ```CIF_FOLDER``` needs to exist on the host, and stored as the environment variable, e.g:
-```bash
-mkdir ~/nrod_cif
-export CIF_FOLDER=~/nrod_cif
-```
-
-#### Running the scripts
-
-We run the scripts from a cron job, e.g.:
-
-```bash
-# Download the incremental (update) CIF
-0 1 1, 3-31 * * . "${HOME}"/.profile && cd ~/OpenRailDataGateway && ./cif_download/update_cif.sh
-
-# Download the full CIF
-0 1 2 * * . "${HOME}"/.profile && cd ~/OpenRailDataGateway && ./cif_download/full_cif.sh
-```
-
-This will download the latest full CIF on 2nd each month, and the incremental (update) CIF any other day.
-
-#### SFTP
-
-The CIF files can be downloaded using SFTP on port 2222 using the credentials set in ```SFTP_USER``` and ```SFTP_PASS```, e.g:
-
-```bash
-sftp -P 2222 ${SFTP_USER}@host
-```
-
 ### TODO
 
 This is a work in progress; we are currently working on the following:
 
 - Pydantic modelling for RTPPM
 - Pydantic modelling for TSR
-- CIF Manager & implement SFTP service
-- Lifts/Platforms API
-- Darwin Feeds?
