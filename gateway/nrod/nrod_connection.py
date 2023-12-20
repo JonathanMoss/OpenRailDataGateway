@@ -380,9 +380,16 @@ class Listener(stomp.ConnectionListener, pydantic.BaseModel):
         )
 
         dest = msg.headers.destination
+        # if dest == VSTP_TOPIC:
+        #     ALL_MESSAGE_C.labels(msg='vstp').inc()
+        #     self.process_vstp(msg.body[0])
+        #     return
+
         if dest == VSTP_TOPIC:
             ALL_MESSAGE_C.labels(msg='vstp').inc()
-            self.process_vstp(msg.body[0])
+            self.vstp_rmq.send_message(
+                msg=json.dumps(msg.body)
+            )
             return
         
         if dest == PPM_TOPIC:
